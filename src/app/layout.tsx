@@ -1,11 +1,19 @@
 import "~/styles/globals.css";
 
+import {
+  ClerkLoaded,
+  ClerkLoading,
+  ClerkProvider,
+  UserButton,
+} from "@clerk/nextjs";
+import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
+import { ourFileRouter } from "~/app/api/uploadthing/core";
+import { Container } from "~/components/container";
+import { Toaster } from "~/components/ui/sonner";
+import { TRPCReactProvider } from "~/trpc/react";
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
-
-import { TRPCReactProvider } from "~/trpc/react";
-import { ClerkProvider } from "@clerk/nextjs";
-import { neobrutalism } from "@clerk/themes";
+import { extractRouterConfig } from "uploadthing/server";
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -20,9 +28,44 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className={`${GeistSans.variable}`}>
         <body>
-          <TRPCReactProvider>{children}</TRPCReactProvider>
+          <NextSSRPlugin
+            /**
+             * The `extractRouterConfig` will extract **only** the route configs
+             * from the router to prevent additional information from being
+             * leaked to the client. The data passed to the client is the same
+             * as if you were to fetch `/api/uploadthing` directly.
+             */
+            routerConfig={extractRouterConfig(ourFileRouter)}
+          />
+          <TRPCReactProvider>
+            <Header />
+            {children}
+          </TRPCReactProvider>
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>
+  );
+}
+
+function Header() {
+  const userButtonAppearance = {
+    elements: {
+      userButtonAvatarBox: "w-10 h-10", // Custom width and height
+      userButtonOuterIdentifier: "text-xl",
+    },
+  };
+  return (
+    <Container>
+      <header className="flex h-12 items-center justify-between">
+        <h1 className="text-xl font-bold">Borbon ID System</h1>
+        <ClerkLoading>
+          <div className="h-10 w-10 animate-pulse rounded-full bg-neutral-300"></div>
+        </ClerkLoading>
+        <ClerkLoaded>
+          <UserButton showName appearance={userButtonAppearance} />
+        </ClerkLoaded>
+      </header>
+    </Container>
   );
 }
