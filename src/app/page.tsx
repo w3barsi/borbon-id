@@ -7,6 +7,7 @@ import { CreateStudentDialog } from "./create-dialog";
 import DataTable from "./data-table";
 import EditStudentDialog from "./edit-dialog";
 import Header from "./header";
+import ViewPhotoDialog from "./view-photo-dialog";
 
 export default async function Home() {
   void api.student.getStudents.prefetch();
@@ -14,9 +15,9 @@ export default async function Home() {
   return (
     <HydrateClient>
       <Header />
-      <Container>
+      <Container className="md:flex md:justify-end">
         <CreateStudentDialog />
-        <EditStudentDialog />
+        <ViewPhotoDialog />
       </Container>
       <Container>
         <DataTable />

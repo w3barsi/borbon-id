@@ -1,6 +1,6 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { files, students } from "~/server/db/schema";
-import { aliasedTable, and, eq } from "drizzle-orm";
+import { students } from "~/server/db/schema";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 export const studentRouter = createTRPCRouter({
@@ -24,13 +24,25 @@ export const studentRouter = createTRPCRouter({
 
     return data;
   }),
+
+  getStudent: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.db.query.students.findFirst({
+        where: (students, { eq }) => eq(students.id, input.id),
+        with: {
+          picture: true,
+          signature: true,
+        },
+      });
+    }),
   createStudent: protectedProcedure
     .input(
       z.object({
         fullName: z.string().optional(), // Optional string
         lrn: z.string().optional(), // Optional string
-        gradeLevel: z.string().optional(), // Optional string (change to `z.number().optional()` if it’s a number)
-        sections: z.array(z.string()).optional(), // Optional array of strings
+        grade: z.number().optional(), // Optional string (change to `z.number().optional()` if it’s a number)
+        section: z.string().optional(), // Optional array of strings
         emergencyName: z.string().optional(), // Optional string
         emergencyNumber: z.string().optional(), // Optional string
         emergencyAddress: z.string().optional(), // Optional string
@@ -41,7 +53,27 @@ export const studentRouter = createTRPCRouter({
       await ctx.db.insert(students).values({
         ...input,
         createdById: ctx.session.id,
-        createdByName: `${ctx.session.firstName} ${ctx.session.lastName}`,
+        createdByName: `${ctx.session.firstName}${ctx.session.lastName ? " " + ctx.session.lastName : ""}`,
       });
+    }),
+  editStudent: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        fullName: z.string().optional(), // Optional string
+        lrn: z.string().optional(), // Optional string
+        grade: z.number().optional(), // Optional string (change to `z.number().optional()` if it’s a number)
+        section: z.string().optional(), // Optional array of strings
+        emergencyName: z.string().optional(), // Optional string
+        emergencyNumber: z.string().optional(), // Optional string
+        emergencyAddress: z.string().optional(), // Optional string
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      console.log(input);
+      return await ctx.db
+        .update(students)
+        .set({ ...input })
+        .where(eq(students.id, input.id));
     }),
 });

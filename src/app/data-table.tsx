@@ -19,7 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Input } from "~/components/ui/input";
 import {
   Table,
   TableBody,
@@ -34,13 +33,27 @@ import clsx from "clsx";
 import { Camera, HardDriveUpload, Trash, View } from "lucide-react";
 import React, { useState } from "react";
 
+import EditStudentDialog from "./edit-dialog";
 import { TakePictureButton, UploadPictureButton } from "./upload-button";
+import useViewPhotoDialogStore from "./view-photo-dialog-store";
 
 export default function DataTable() {
   const [data] = api.student.getStudents.useSuspenseQuery();
+  const [id, setId] = useState<number | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const handleNameClick = (id: number) => {
+    setId(id);
+    setIsEditDialogOpen(true);
+  };
 
   return (
     <div className="flex flex-col">
+      <EditStudentDialog
+        user={{ id }}
+        isOpen={isEditDialogOpen}
+        setIsOpen={setIsEditDialogOpen}
+      />
       <Table>
         <TableHeader>
           <TableRow>
@@ -52,7 +65,15 @@ export default function DataTable() {
         <TableBody>
           {data.map((student) => (
             <TableRow key={student.id}>
-              <TableCell>{student.fullName}</TableCell>
+              <TableCell>
+                <Button
+                  variant="link"
+                  className="p-0 hover:text-base"
+                  onClick={() => handleNameClick(student.id)}
+                >
+                  {student.fullName}
+                </Button>
+              </TableCell>
               <TableCell>
                 <FileDropdown
                   for="picture"
@@ -88,16 +109,14 @@ function FileDropdown(props: {
     url: string | null;
   } | null;
 }) {
+  const { setIsViewPhotoDialogOpen, setUrl } = useViewPhotoDialogStore();
   const file = props.file;
   const [isOpen, setIsOpen] = useState(false);
   return (
     <AlertDialog>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="w-full p-0 text-blue-800 underline underline-offset-4"
-          >
+          <Button variant="link" className="w-full p-0">
             {file?.url ? "Yes" : "No"}
           </Button>
         </DropdownMenuTrigger>
@@ -125,7 +144,13 @@ function FileDropdown(props: {
             </DropdownMenuItem>
             {file?.url ? (
               <>
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setUrl(props.file?.url ?? "");
+                    setIsViewPhotoDialogOpen(true);
+                  }}
+                >
                   <View />
                   View Photo
                 </DropdownMenuItem>

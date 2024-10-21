@@ -27,7 +27,7 @@ export function CreateStudentDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>Create New Student</Button>
+        <Button className="w-full md:w-56">Create New Student</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -49,6 +49,7 @@ function CreateStudentForm({
   const [lrn, setLrn] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
   const [sections, setSections] = useState<string[]>();
+  const [sectionValue, setSectionValue] = useState("");
   const [emergencyName, setEmergencyName] = useState("");
   const [emergencyNumber, setEmergencyNumber] = useState("");
   const [emergencyAddress, setEmergencyAddress] = useState("");
@@ -90,11 +91,12 @@ function CreateStudentForm({
       fullName,
       lrn,
       grade: Number(gradeLevel),
-      section: sections,
+      section: sectionValue,
       emergencyName,
       emergencyNumber,
       emergencyAddress,
     };
+    console.log(student);
     mutate({ ...student });
   };
 
@@ -137,6 +139,10 @@ function CreateStudentForm({
               <Label>Section</Label>
               <Select
                 disabled={sections === undefined || sections.length === 0}
+                value={sectionValue}
+                onValueChange={(e) => {
+                  setSectionValue(e);
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="" />

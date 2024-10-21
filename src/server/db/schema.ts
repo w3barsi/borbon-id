@@ -33,7 +33,7 @@ export const students = createTable("student", {
   emergencyAddress: text("emergency_address"),
 
   createdById: text("created_by").notNull(),
-  createdByName: text("created_by").notNull(),
+  createdByName: text("created_by_name").notNull(),
 
   ...timestamp,
 });

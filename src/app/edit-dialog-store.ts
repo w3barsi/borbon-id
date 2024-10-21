@@ -8,7 +8,6 @@ type ImgDialogStore = {
 };
 export const createDialogStore = create<ImgDialogStore>((set) => ({
   isOpen: false,
-  link: "",
   setIsOpen: (value: boolean) => set(() => ({ isOpen: value })),
   setLink: (url: string) => set(() => ({ link: url })),
 }));
