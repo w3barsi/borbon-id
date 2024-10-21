@@ -1,29 +1,34 @@
-import { clerkClient } from "@clerk/nextjs/server";
-import { type Student } from "~/app/columns";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "~/server/api/trpc";
-import { filesTable, studentsTable } from "~/server/db/schema";
-import { aliasedTable, eq } from "drizzle-orm";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { studentsTable } from "~/server/db/schema";
 import { z } from "zod";
 
 export const studentRouter = createTRPCRouter({
   getStudents: protectedProcedure.query(async ({ ctx }) => {
-    // const signatureTable = aliasedTable(filesTable, "signature")
-    // const pictureTable = aliasedTable(filesTable, "picture")
-    // const students = await ctx.db
-    //   .select()
-    //   .from(studentsTable)
-    //   .leftJoin(pictureTable, eq(studentsTable.pictureKey, pictureTable.key))
-    //   .leftJoin(signatureTable, eq(studentsTable.signatureKey, signatureTable.key))
-
     return ctx.db.query.studentsTable.findMany({
       with: {
         signature: true,
         picture: true,
       },
+      orderBy: (studentsTable, { desc }) => desc(studentsTable.createdAt),
     });
   }),
+  createStudent: protectedProcedure
+    .input(
+      z.object({
+        fullName: z.string().optional(), // Optional string
+        lrn: z.string().optional(), // Optional string
+        gradeLevel: z.string().optional(), // Optional string (change to `z.number().optional()` if it’s a number)
+        sections: z.array(z.string()).optional(), // Optional array of strings
+        emergencyName: z.string().optional(), // Optional string
+        emergencyNumber: z.string().optional(), // Optional string
+        emergencyAddress: z.string().optional(), // Optional string
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      await ctx.db.insert(studentsTable).values({
+        ...input,
+        createdById: ctx.session.id,
+        createdByName: `${ctx.session.firstName} ${ctx.session.lastName}`,
+      });
+    }),
 });

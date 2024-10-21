@@ -17,9 +17,9 @@ const timestamp = {
     .default(sql`(unixepoch())`)
     .notNull(),
   updatedAt: int("updated_at", { mode: "timestamp" }).$onUpdate(
-    () => new Date()
+    () => new Date(),
   ),
-}
+};
 
 export const studentsTable = createTable("student", {
   id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
@@ -35,42 +35,40 @@ export const studentsTable = createTable("student", {
   pictureKey: text("picture_key").references(() => filesTable.key),
   signatureKey: text("signature_key").references(() => filesTable.key),
 
-  createdBy: text("created_by").notNull(),
+  createdById: text("created_by").notNull(),
+  createdByName: text("created_by").notNull(),
 
-  ...timestamp
-})
+  ...timestamp,
+});
 
-export const studentRelations = relations(studentsTable, ({one}) => ({
+export const studentRelations = relations(studentsTable, ({ one }) => ({
   signature: one(filesTable, {
     fields: [studentsTable.signatureKey],
-    references: [filesTable.key]
+    references: [filesTable.key],
   }),
   picture: one(filesTable, {
     fields: [studentsTable.pictureKey],
-    references: [filesTable.key]
+    references: [filesTable.key],
   }),
-}))
+}));
 
 export const filesTable = createTable("file_upload", {
-  for: text("for", {enum: ["picture", "signature"]}),
-  key: text("key", {length:256}).unique().primaryKey(),
+  for: text("for", { enum: ["picture", "signature"] }),
+  key: text("key", { length: 256 }).unique().primaryKey(),
   // name of file
-  name: text("name", {length:256}),
-  type: text("type", {length:256}),
+  name: text("name", { length: 256 }),
+  type: text("type", { length: 256 }),
   url: text("url"),
-})
-
-
+});
 
 export const userTable = createTable("user", {
   id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
 
   pictureKey: text("picture_key").references(() => nameTable.key),
   signatureKey: text("signature_key").references(() => nameTable.key),
-})
-
+});
 
 export const nameTable = createTable("name", {
-  key: text("key", {length:256}).unique().primaryKey().notNull(),
+  key: text("key", { length: 256 }).unique().primaryKey().notNull(),
   url: text("url").notNull(),
-})
+});
