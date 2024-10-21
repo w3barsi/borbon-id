@@ -5,7 +5,8 @@ import { api, HydrateClient } from "~/trpc/server";
 
 import { CreateStudentDialog } from "./create-dialog";
 import DataTable from "./data-table";
-import Header from "./Header";
+import EditStudentDialog from "./edit-dialog";
+import Header from "./header";
 
 export default async function Home() {
   void api.student.getStudents.prefetch();
@@ -14,8 +15,8 @@ export default async function Home() {
     <HydrateClient>
       <Header />
       <Container>
-        <Input />
         <CreateStudentDialog />
+        <EditStudentDialog />
       </Container>
       <Container>
         <DataTable />

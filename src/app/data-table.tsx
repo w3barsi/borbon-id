@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { Input } from "~/components/ui/input";
 import {
   Table,
   TableBody,
@@ -31,7 +32,9 @@ import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import clsx from "clsx";
 import { Camera, HardDriveUpload, Trash, View } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
+
+import { TakePictureButton, UploadPictureButton } from "./upload-button";
 
 export default function DataTable() {
   const [data] = api.student.getStudents.useSuspenseQuery();
@@ -42,19 +45,27 @@ export default function DataTable() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-full">Full Name</TableHead>
-            <TableHead>Picture</TableHead>
-            <TableHead>Signature</TableHead>
+            <TableHead className="min-w-20 text-center">Picture</TableHead>
+            <TableHead className="min-w-20 text-center">Signature</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((student) => (
             <TableRow key={student.id}>
               <TableCell>{student.fullName}</TableCell>
-              <TableCell className="w-20">
-                <FileDropdown type="picture" file={student.picture} />
+              <TableCell>
+                <FileDropdown
+                  for="picture"
+                  file={student.picture}
+                  user={{ id: student.id, fullName: student.fullName }}
+                />
               </TableCell>
-              <TableCell className="">
-                <FileDropdown type="signature" file={student.signature} />
+              <TableCell>
+                <FileDropdown
+                  for="signature"
+                  file={student.signature}
+                  user={{ id: student.id, fullName: student.fullName }}
+                />
               </TableCell>
             </TableRow>
           ))}
@@ -65,21 +76,23 @@ export default function DataTable() {
 }
 
 function FileDropdown(props: {
-  type: "signature" | "picture";
+  for: "signature" | "picture";
+  user: {
+    id: number;
+    fullName: string | null;
+  };
   file: {
     name: string | null;
-    for: "picture" | "signature" | null;
     key: string;
     type: string | null;
     url: string | null;
   } | null;
 }) {
   const file = props.file;
-  const a = !!file?.url;
-  console.log(a);
+  const [isOpen, setIsOpen] = useState(false);
   return (
     <AlertDialog>
-      <DropdownMenu>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
@@ -90,19 +103,31 @@ function FileDropdown(props: {
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuGroup>
-            <DropdownMenuItem className="cursor-pointer">
-              <Camera />
-              <span>Take Photo</span>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onSelect={(e) => e.preventDefault()}
+            >
+              <TakePictureButton
+                for={props.for}
+                user={{ id: props.user.id, fullName: props.user.fullName }}
+                setIsOpen={setIsOpen}
+              />
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
-              <HardDriveUpload />
-              <span>Upload Photo</span>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onSelect={(e) => e.preventDefault()}
+            >
+              <UploadPictureButton
+                for={props.for}
+                user={{ id: props.user.id, fullName: props.user.fullName }}
+                setIsOpen={setIsOpen}
+              />
             </DropdownMenuItem>
             {file?.url ? (
               <>
                 <DropdownMenuItem className="cursor-pointer">
                   <View />
-                  <span>View Photo</span>
+                  View Photo
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <AlertDialogTrigger asChild>

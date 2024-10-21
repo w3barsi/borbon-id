@@ -1,16 +1,28 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { studentsTable } from "~/server/db/schema";
+import { files, students } from "~/server/db/schema";
+import { aliasedTable, and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 export const studentRouter = createTRPCRouter({
   getStudents: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.db.query.studentsTable.findMany({
+    // return ctx.db.query.students.findMany({
+    //   with: {
+    //     signature: true,
+    //     picture: true,
+    //   },
+    //   orderBy: (studentsTable, { desc }) => desc(studentsTable.createdAt),
+    // });
+    // console.log(
+    //   ctx.db.query.students.findMany({ with: { files: true } }).toSQL(),
+    // );
+    const data = ctx.db.query.students.findMany({
       with: {
-        signature: true,
         picture: true,
+        signature: true,
       },
-      orderBy: (studentsTable, { desc }) => desc(studentsTable.createdAt),
     });
+
+    return data;
   }),
   createStudent: protectedProcedure
     .input(
@@ -25,7 +37,8 @@ export const studentRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      await ctx.db.insert(studentsTable).values({
+      console.log(`${ctx.session.firstName} ${ctx.session.lastName}`);
+      await ctx.db.insert(students).values({
         ...input,
         createdById: ctx.session.id,
         createdByName: `${ctx.session.firstName} ${ctx.session.lastName}`,

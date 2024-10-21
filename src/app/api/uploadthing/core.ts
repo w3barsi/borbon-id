@@ -1,7 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "~/server/db";
-import { fileUpload, student } from "~/server/db/schema";
-import { eq } from "drizzle-orm";
+import { pictures, signatures } from "~/server/db/schema";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { z } from "zod";
@@ -17,12 +16,10 @@ export const ourFileRouter = {
     .middleware(async ({ input }) => {
       // This code runs on your server before upload
       const user = auth();
-      console.log("Middleware Reached");
 
       // If you throw, the user will not be able to upload
       // eslint-disable-next-line @typescript-eslint/only-throw-error
       if (!user) throw new UploadThingError("Unauthorized");
-      console.log("Middleware Reached PART 2");
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
       return { userId: user.userId, input };
@@ -30,35 +27,22 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       const input = metadata.input;
 
-      try {
-        await db.insert(fileUpload).values({
-          for: "picture",
-          key: file.key,
-          type: file.type,
-          url: file.url,
-        });
-      } catch (e) {
-        console.error("Failed to insert file info into db", e);
-      }
-
       if (input.for === "picture") {
-        try {
-          await db
-            .update(student)
-            .set({ pictureKey: file.key })
-            .where(eq(student.id, input.id));
-        } catch (e) {
-          console.error("Failed to update student info", e);
-        }
-      } else {
-        try {
-          await db
-            .update(student)
-            .set({ signatureKey: file.key })
-            .where(eq(student.id, input.id));
-        } catch (e) {
-          console.error("Failed to update student info", e);
-        }
+        await db.insert(pictures).values({
+          type: file.type,
+          key: file.key,
+          url: file.url,
+          name: file.name,
+          studentId: input.id,
+        });
+      } else if (input.for === "signature") {
+        await db.insert(signatures).values({
+          type: file.type,
+          key: file.key,
+          url: file.url,
+          name: file.name,
+          studentId: input.id,
+        });
       }
 
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback

@@ -21,7 +21,7 @@ const timestamp = {
   ),
 };
 
-export const studentsTable = createTable("student", {
+export const students = createTable("student", {
   id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   lrn: text("lrn", { length: 256 }),
   grade: int("grade", { mode: "number" }),
@@ -32,28 +32,19 @@ export const studentsTable = createTable("student", {
   emergencyNumber: text("emergency_number"),
   emergencyAddress: text("emergency_address"),
 
-  pictureKey: text("picture_key").references(() => filesTable.key),
-  signatureKey: text("signature_key").references(() => filesTable.key),
-
   createdById: text("created_by").notNull(),
   createdByName: text("created_by").notNull(),
 
   ...timestamp,
 });
 
-export const studentRelations = relations(studentsTable, ({ one }) => ({
-  signature: one(filesTable, {
-    fields: [studentsTable.signatureKey],
-    references: [filesTable.key],
-  }),
-  picture: one(filesTable, {
-    fields: [studentsTable.pictureKey],
-    references: [filesTable.key],
-  }),
+export const studentRelations = relations(students, ({ one }) => ({
+  picture: one(pictures),
+  signature: one(signatures),
 }));
 
-export const filesTable = createTable("file_upload", {
-  for: text("for", { enum: ["picture", "signature"] }),
+export const pictures = createTable("pictures", {
+  studentId: int("student_id").references(() => students.id),
   key: text("key", { length: 256 }).unique().primaryKey(),
   // name of file
   name: text("name", { length: 256 }),
@@ -61,14 +52,25 @@ export const filesTable = createTable("file_upload", {
   url: text("url"),
 });
 
-export const userTable = createTable("user", {
-  id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+export const picturesRelation = relations(pictures, ({ one }) => ({
+  student: one(students, {
+    fields: [pictures.studentId],
+    references: [students.id],
+  }),
+}));
 
-  pictureKey: text("picture_key").references(() => nameTable.key),
-  signatureKey: text("signature_key").references(() => nameTable.key),
+export const signatures = createTable("signatures", {
+  studentId: int("student_id").references(() => students.id),
+  key: text("key", { length: 256 }).unique().primaryKey(),
+  // name of file
+  name: text("name", { length: 256 }),
+  type: text("type", { length: 256 }),
+  url: text("url"),
 });
 
-export const nameTable = createTable("name", {
-  key: text("key", { length: 256 }).unique().primaryKey().notNull(),
-  url: text("url").notNull(),
-});
+export const signaturesRelation = relations(signatures, ({ one }) => ({
+  student: one(students, {
+    fields: [signatures.studentId],
+    references: [students.id],
+  }),
+}));

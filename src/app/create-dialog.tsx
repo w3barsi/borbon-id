@@ -27,7 +27,7 @@ export function CreateStudentDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>Create</Button>
+        <Button>Create New Student</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
