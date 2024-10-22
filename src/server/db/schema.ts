@@ -44,7 +44,9 @@ export const studentRelations = relations(students, ({ one }) => ({
 }));
 
 export const pictures = createTable("pictures", {
-  studentId: int("student_id").references(() => students.id),
+  studentId: int("student_id").references(() => students.id, {
+    onDelete: "cascade",
+  }),
   key: text("key", { length: 256 }).unique().primaryKey(),
   // name of file
   name: text("name", { length: 256 }),

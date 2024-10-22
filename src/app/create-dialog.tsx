@@ -1,192 +1,231 @@
 "use client";
 
-import { Input } from "~/components/input-overlap";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import { Label } from "~/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
 import { api } from "~/trpc/react";
-import React, { useEffect, useState, type FormEvent } from "react";
+import { Trash } from "lucide-react";
+import { Dispatch, SetStateAction, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
-export function CreateStudentDialog() {
+type EditStudentDialog = {
+  isOpen: boolean;
+  setIsOpen: Dispatch<SetStateAction<boolean>>;
+  user: {
+    id: number;
+  };
+};
+const formSchema = z.object({
+  fullName: z.string().optional(),
+  lrn: z.string().optional(),
+  grade: z.coerce.number().optional(),
+  section: z.string().optional(),
+  emergencyName: z.string().optional(),
+  emergencyNumber: z.string().optional(),
+  emergencyAddress: z.string().optional(),
+});
+
+export default function CreateStudentDialog() {
+  const utils = api.useUtils();
   const [isOpen, setIsOpen] = useState(false);
+  const [toastId, setToastId] = useState<number | string>();
+
+  const {
+    data: student,
+    mutate: getStudentData,
+    isPending,
+  } = api.student.getStudent.useMutation({
+    onSuccess: (data) => {
+      form.reset({
+        lrn: data?.lrn ?? "",
+        fullName: data?.fullName ?? "",
+        grade: data?.grade ?? 0,
+        section: data?.section ?? "",
+        emergencyName: data?.emergencyName ?? "",
+        emergencyNumber: data?.emergencyNumber ?? "",
+        emergencyAddress: data?.emergencyAddress ?? "",
+      });
+    },
+  });
+
+  const { mutate: createStudent } = api.student.createStudent.useMutation({
+    onMutate: () => {
+      setToastId(toast("Saving student records to the database."));
+    },
+    onSuccess: async () => {
+      await utils.student.getStudents.invalidate();
+      toast.success("Saved student records to the database.", {
+        id: toastId,
+      });
+    },
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      lrn: "",
+      fullName: "",
+      grade: 0,
+      section: "",
+      emergencyName: "",
+      emergencyNumber: "",
+      emergencyAddress: "",
+    },
+  });
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    // Do something with the form values.
+    // ✅ This will be type-safe and validated.
+    createStudent({ ...values });
+    setIsOpen(false);
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full md:w-56">Create New Student</Button>
+        <Button className="w-full md:w-56">Create Student</Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create Student ID</DialogTitle>
-          <DialogDescription></DialogDescription>
-        </DialogHeader>
-        <CreateStudentForm setIsOpen={setIsOpen} />
+        {isPending ? (
+          <div>Loading student data...</div>
+        ) : (
+          <>
+            <DialogTitle>Edit Student</DialogTitle>
+            <DialogDescription></DialogDescription>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Full Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lrn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>LRN</FormLabel>
+                      <FormControl>
+                        <Input placeholder="LRN" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex space-x-4">
+                  <div className="w-1/2">
+                    <FormField
+                      control={form.control}
+                      name="grade"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Grade</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Grade"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <FormField
+                      control={form.control}
+                      name="section"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Section</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Section" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="emergencyName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Emergency Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="emergencyNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Emergency Number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="emergencyAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Emergency Address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex space-x-2">
+                  <Button type="submit" className="w-full">
+                    Submit
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </>
+        )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function CreateStudentForm({
-  setIsOpen,
-}: {
-  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}) {
-  const [fullName, setFullName] = useState("");
-  const [lrn, setLrn] = useState("");
-  const [gradeLevel, setGradeLevel] = useState("");
-  const [sections, setSections] = useState<string[]>();
-  const [sectionValue, setSectionValue] = useState("");
-  const [emergencyName, setEmergencyName] = useState("");
-  const [emergencyNumber, setEmergencyNumber] = useState("");
-  const [emergencyAddress, setEmergencyAddress] = useState("");
-
-  const utils = api.useUtils();
-  const { mutate } = api.student.createStudent.useMutation({
-    onSuccess: async () => {
-      await utils.student.getStudents.invalidate();
-      setIsOpen(false);
-    },
-  });
-
-  useEffect(() => {
-    if (gradeLevel === "7") {
-      setSections(["ANEMONE", "FUSCHIA", "PEONY", "PERWINKLE"]);
-    } else if (gradeLevel === "8") {
-      setSections(["ATHENA", "HERA", "PERSEPHONE", "THALIA"]);
-    } else if (gradeLevel === "9") {
-      setSections(["AMIABILITY", "JUSTICE", "MEEKNESS"]);
-    } else if (gradeLevel === "10") {
-      setSections([
-        "ST. CAMILUS",
-        "ST. CECILIA",
-        "ST. CLAIRE",
-        "ST. MARTHA",
-        "ST. THERESE",
-      ]);
-    } else if (gradeLevel === "11") {
-      setSections(["ABM", "COOKERY", "ICT", "HUMSS"]);
-    } else if (gradeLevel === "12") {
-      setSections(["ABM", "COOKERY", "ICT", "HUMSS"]);
-    }
-  }, [gradeLevel]);
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const student = {
-      fullName,
-      lrn,
-      grade: Number(gradeLevel),
-      section: sectionValue,
-      emergencyName,
-      emergencyNumber,
-      emergencyAddress,
-    };
-    console.log(student);
-    mutate({ ...student });
-  };
-
-  return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        <div className="flex w-full flex-col gap-4">
-          <Input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-          >
-            Full Name
-          </Input>
-          <Input
-            type="text"
-            value={lrn}
-            onChange={(e) => setLrn(e.target.value)}
-          >
-            LRN
-          </Input>
-          <div className="flex w-full gap-2">
-            <div className="w-1/2">
-              <Label>Grade Level</Label>
-              <Select value={gradeLevel} onValueChange={setGradeLevel}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7">Grade 7</SelectItem>
-                  <SelectItem value="8">Grade 8</SelectItem>
-                  <SelectItem value="9">Grade 9</SelectItem>
-                  <SelectItem value="10">Grade 10</SelectItem>
-                  <SelectItem value="11">Grade 11</SelectItem>
-                  <SelectItem value="12">Grade 12</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-1/2">
-              <Label>Section</Label>
-              <Select
-                disabled={sections === undefined || sections.length === 0}
-                value={sectionValue}
-                onValueChange={(e) => {
-                  setSectionValue(e);
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sections?.map((section) => (
-                    <SelectItem value={section} key={section}>
-                      {section}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <Input
-            type="text"
-            value={emergencyName}
-            onChange={(e) => setEmergencyName(e.target.value)}
-          >
-            Emergency Name
-          </Input>
-          <Input
-            type="text"
-            value={emergencyNumber}
-            onChange={(e) => setEmergencyNumber(e.target.value)}
-          >
-            Emergency Number
-          </Input>
-          <Input
-            type="text"
-            value={emergencyAddress}
-            onChange={(e) => setEmergencyAddress(e.target.value)}
-          >
-            Emergency Address
-          </Input>
-
-          <Button
-            type="submit"
-            className="w-full bg-green-600 hover:bg-green-500"
-          >
-            Create
-          </Button>
-        </div>
-      </form>
-    </div>
   );
 }

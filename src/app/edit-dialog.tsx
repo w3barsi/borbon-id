@@ -1,258 +1,252 @@
 "use client";
 
-import { Input } from "~/components/input-overlap";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { Label } from "~/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
 import { api } from "~/trpc/react";
-import {
-  Dispatch,
-  FormEvent,
-  SetStateAction,
-  useEffect,
-  useState,
-} from "react";
+import { Trash } from "lucide-react";
+import { Dispatch, SetStateAction, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 type EditStudentDialog = {
   isOpen: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   user: {
-    id: number | null;
+    id: number;
   };
 };
+const formSchema = z.object({
+  fullName: z.string().optional(),
+  lrn: z.string().optional(),
+  grade: z.coerce.number().optional(),
+  section: z.string().optional(),
+  emergencyName: z.string().optional(),
+  emergencyNumber: z.string().optional(),
+  emergencyAddress: z.string().optional(),
+});
 
 export default function EditStudentDialog(props: EditStudentDialog) {
-  const [id, setId] = useState(props.user.id);
   const utils = api.useUtils();
+  const [toastId, setToastId] = useState<number | string>();
 
   const {
-    mutate: getStudent,
-    data: studentData,
+    data: student,
+    mutate: getStudentData,
     isPending,
-  } = api.student.getStudent.useMutation();
-  const { mutate: editStudent } = api.student.editStudent.useMutation({
-    onSuccess: async () => {
-      await utils.student.getStudents.invalidate();
-      props.setIsOpen(false);
+  } = api.student.getStudent.useMutation({
+    onSuccess: (data) => {
+      form.reset({
+        lrn: data?.lrn ?? "",
+        fullName: data?.fullName ?? "",
+        grade: data?.grade ?? 0,
+        section: data?.section ?? "",
+        emergencyName: data?.emergencyName ?? "",
+        emergencyNumber: data?.emergencyNumber ?? "",
+        emergencyAddress: data?.emergencyAddress ?? "",
+      });
     },
   });
 
-  const [sections, setSections] = useState<string[]>();
-
-  const [student, setStudent] = useState<{
-    fullName: string;
-    lrn: string;
-    gradeLevel: string;
-    section: string;
-    emergencyName: string;
-    emergencyNumber: string;
-    emergencyAddress: string;
-  }>({
-    fullName: "",
-    lrn: "",
-    gradeLevel: "",
-    section: "",
-    emergencyName: "",
-    emergencyNumber: "",
-    emergencyAddress: "",
+  const { mutate: editStudent } = api.student.editStudent.useMutation({
+    onMutate: () => {
+      setToastId(toast("Saving changes to database."));
+    },
+    onSuccess: async () => {
+      await utils.student.getStudents.invalidate();
+      toast.success("Saved changes to database.", {
+        id: toastId,
+      });
+    },
   });
 
-  useEffect(() => {
-    setStudent({
-      emergencyName: studentData?.emergencyName ?? "",
-      emergencyNumber: studentData?.emergencyNumber ?? "",
-      emergencyAddress: studentData?.emergencyAddress ?? "",
-      fullName: studentData?.fullName ?? "",
-      section: studentData?.section ?? "",
-      lrn: studentData?.section ?? "",
-      gradeLevel: String(studentData?.grade) ?? "",
-    });
-  }, [studentData]);
+  const { mutate: deleteStudent } = api.student.deleteStudent.useMutation({
+    onMutate: () => {
+      props.setIsOpen(false);
+      setToastId(toast("Deleting student from database."));
+    },
+    onSuccess: async () => {
+      await utils.student.getStudents.invalidate();
+      toast.success("Deleted student from database.", {
+        id: toastId,
+      });
+    },
+  });
 
-  useEffect(() => {
-    setId(props.user.id);
-  }, [props.user.id]);
-
-  useEffect(() => {
-    if (id === null) return;
-    getStudent({ id });
-  }, [id, getStudent]);
-
-  useEffect(() => {
-    if (student.gradeLevel === "7") {
-      setSections(["ANEMONE", "FUSCHIA", "PEONY", "PERWINKLE"]);
-    } else if (student.gradeLevel === "8") {
-      setSections(["ATHENA", "HERA", "PERSEPHONE", "THALIA"]);
-    } else if (student.gradeLevel === "9") {
-      setSections(["AMIABILITY", "JUSTICE", "MEEKNESS"]);
-    } else if (student.gradeLevel === "10") {
-      setSections([
-        "ST. CAMILUS",
-        "ST. CECILIA",
-        "ST. CLAIRE",
-        "ST. MARTHA",
-        "ST. THERESE",
-      ]);
-    } else if (student.gradeLevel === "11") {
-      setSections(["ABM", "COOKERY", "ICT", "HUMSS"]);
-    } else if (student.gradeLevel === "12") {
-      setSections(["ABM", "COOKERY", "ICT", "HUMSS"]);
-    }
-  }, [student.gradeLevel]);
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!id) return;
-
-    editStudent({ ...student, id });
-  };
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      lrn: "",
+      fullName: "",
+      grade: 0,
+      section: "",
+      emergencyName: "",
+      emergencyNumber: "",
+      emergencyAddress: "",
+    },
+  });
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    // Do something with the form values.
+    // ✅ This will be type-safe and validated.
+    editStudent({ ...values, id: props.user.id });
+    props.setIsOpen(false);
+  }
 
   return (
-    <Dialog
-      open={props.isOpen}
-      onOpenChange={(b) => {
-        props.setIsOpen(b);
-        if (b === false) {
-          setId(null);
-        }
-      }}
-    >
-      <DialogContent>
+    <Dialog open={props.isOpen} onOpenChange={props.setIsOpen}>
+      <DialogContent
+        onOpenAutoFocus={() => getStudentData({ id: props.user.id })}
+      >
         {isPending ? (
-          <div>Loading data...</div>
+          <div>Loading student data...</div>
         ) : (
           <>
-            <DialogHeader>
-              <DialogTitle>Are you absolutely sure?</DialogTitle>
-            </DialogHeader>
+            <DialogTitle>Edit Student</DialogTitle>
             <DialogDescription></DialogDescription>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Full Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lrn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>LRN</FormLabel>
+                      <FormControl>
+                        <Input placeholder="LRN" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div>
-              <form onSubmit={handleSubmit}>
-                <div className="flex w-full flex-col gap-4">
-                  <Input
-                    type="text"
-                    value={student.fullName}
-                    onChange={(e) =>
-                      setStudent((s) => ({ ...s, fullName: e.target.value }))
-                    }
-                  >
-                    Full Name
-                  </Input>
-                  <Input
-                    type="text"
-                    value={student.lrn}
-                    onChange={(e) =>
-                      setStudent((s) => ({ ...s, lrn: e.target.value }))
-                    }
-                  >
-                    LRN
-                  </Input>
-                  <div className="flex w-full gap-2">
-                    <div className="w-1/2">
-                      <Label>Grade Level</Label>
-                      <Select
-                        value={student.gradeLevel}
-                        onValueChange={(v) =>
-                          setStudent((s) => ({ ...s, gradeLevel: v }))
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="7">Grade 7</SelectItem>
-                          <SelectItem value="8">Grade 8</SelectItem>
-                          <SelectItem value="9">Grade 9</SelectItem>
-                          <SelectItem value="10">Grade 10</SelectItem>
-                          <SelectItem value="11">Grade 11</SelectItem>
-                          <SelectItem value="12">Grade 12</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="w-1/2">
-                      <Label>Section</Label>
-                      <Select
-                        value={student.section}
-                        onValueChange={(v) =>
-                          setStudent((s) => ({ ...s, section: v }))
-                        }
-                        disabled={
-                          sections === undefined || sections.length === 0
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sections?.map((section) => (
-                            <SelectItem value={section} key={section}>
-                              {section}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                <div className="flex space-x-4">
+                  <div className="w-1/2">
+                    <FormField
+                      control={form.control}
+                      name="grade"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Grade</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Grade"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                  <Input
-                    type="text"
-                    value={student.emergencyName}
-                    onChange={(e) =>
-                      setStudent((s) => ({
-                        ...s,
-                        emergencyName: e.target.value,
-                      }))
-                    }
-                  >
-                    Emergency Name
-                  </Input>
-                  <Input
-                    type="text"
-                    value={student.emergencyNumber}
-                    onChange={(e) =>
-                      setStudent((s) => ({
-                        ...s,
-                        emergencyNumber: e.target.value,
-                      }))
-                    }
-                  >
-                    Emergency Number
-                  </Input>
-                  <Input
-                    type="text"
-                    value={student.emergencyAddress}
-                    onChange={(e) =>
-                      setStudent((s) => ({
-                        ...s,
-                        emergencyAddress: e.target.value,
-                      }))
-                    }
-                  >
-                    Emergency Address
-                  </Input>
-
+                  <div className="w-1/2">
+                    <FormField
+                      control={form.control}
+                      name="section"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Section</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Section" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="emergencyName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Emergency Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="emergencyNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Emergency Number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="emergencyAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Emergency Address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex space-x-2">
+                  <Button type="submit" className="w-full">
+                    Submit
+                  </Button>
                   <Button
-                    type="submit"
-                    className="w-full bg-green-600 hover:bg-green-500"
+                    variant="destructive"
+                    className="px-2"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      deleteStudent({
+                        id: props.user.id,
+                        sigKey: student?.signature?.key,
+                        picKey: student?.picture?.key,
+                      });
+                    }}
                   >
-                    Create
+                    <Trash />
                   </Button>
                 </div>
               </form>
-            </div>
+            </Form>
           </>
         )}
       </DialogContent>

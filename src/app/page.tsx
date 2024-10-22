@@ -3,9 +3,8 @@ import { Container } from "~/components/container";
 import { Input } from "~/components/ui/input";
 import { api, HydrateClient } from "~/trpc/server";
 
-import { CreateStudentDialog } from "./create-dialog";
+import CreateStudentDialog from "./create-dialog";
 import DataTable from "./data-table";
-import EditStudentDialog from "./edit-dialog";
 import Header from "./header";
 import ViewPhotoDialog from "./view-photo-dialog";
 

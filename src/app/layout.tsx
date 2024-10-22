@@ -12,12 +12,18 @@ import { Container } from "~/components/container";
 import { Toaster } from "~/components/ui/sonner";
 import { TRPCReactProvider } from "~/trpc/react";
 import { GeistSans } from "geist/font/sans";
-import { type Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { extractRouterConfig } from "uploadthing/server";
 
 export const metadata: Metadata = {
   title: "Borbon ID System",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
+};
+
+export const viewport: Viewport = {
+  initialScale: 1,
+  maximumScale: 1,
+  width: "device-width",
 };
 
 export default function RootLayout({
@@ -37,7 +43,7 @@ export default function RootLayout({
             routerConfig={extractRouterConfig(ourFileRouter)}
           />
           <TRPCReactProvider>{children}</TRPCReactProvider>
-          <Toaster />
+          <Toaster richColors />
         </body>
       </html>
     </ClerkProvider>

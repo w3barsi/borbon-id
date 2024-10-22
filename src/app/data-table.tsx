@@ -39,7 +39,7 @@ import useViewPhotoDialogStore from "./view-photo-dialog-store";
 
 export default function DataTable() {
   const [data] = api.student.getStudents.useSuspenseQuery();
-  const [id, setId] = useState<number | null>(null);
+  const [id, setId] = useState<number>(0);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleNameClick = (id: number) => {
@@ -109,9 +109,17 @@ function FileDropdown(props: {
     url: string | null;
   } | null;
 }) {
+  const utils = api.useUtils();
+  const { mutate: deletePhoto } = api.student.deleteUpload.useMutation({
+    onSuccess: async () => {
+      await utils.student.getStudents.invalidate();
+    },
+  });
+
   const { setIsViewPhotoDialogOpen, setUrl } = useViewPhotoDialogStore();
   const file = props.file;
   const [isOpen, setIsOpen] = useState(false);
+
   return (
     <AlertDialog>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -179,7 +187,12 @@ function FileDropdown(props: {
         </AlertDialogDescription>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction className="bg-red-500 hover:bg-red-700">
+          <AlertDialogAction
+            className="bg-red-500 hover:bg-red-700"
+            onClick={() => {
+              deletePhoto({ key: file!.key, for: props.for });
+            }}
+          >
             Delete
           </AlertDialogAction>
         </AlertDialogFooter>
