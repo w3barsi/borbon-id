@@ -100,6 +100,8 @@ export const studentRouter = createTRPCRouter({
       } else if (!input.picKey && input.sigKey) {
         await utapi.deleteFiles(input.sigKey);
       }
+      await ctx.db.delete(pictures).where(eq(pictures.studentId, input.id));
+      await ctx.db.delete(signatures).where(eq(signatures.studentId, input.id));
 
       return await ctx.db.delete(students).where(eq(students.id, input.id));
     }),

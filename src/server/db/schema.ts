@@ -62,7 +62,9 @@ export const picturesRelation = relations(pictures, ({ one }) => ({
 }));
 
 export const signatures = createTable("signatures", {
-  studentId: int("student_id").references(() => students.id),
+  studentId: int("student_id").references(() => students.id, {
+    onDelete: "cascade",
+  }),
   key: text("key", { length: 256 }).unique().primaryKey(),
   // name of file
   name: text("name", { length: 256 }),
