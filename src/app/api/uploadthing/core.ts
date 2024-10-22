@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "~/server/db";
 import { pictures, signatures } from "~/server/db/schema";
+import { eq } from "drizzle-orm";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { z } from "zod";
@@ -28,6 +29,7 @@ export const ourFileRouter = {
       const input = metadata.input;
 
       if (input.for === "picture") {
+        await db.delete(pictures).where(eq(pictures.studentId, input.id));
         await db.insert(pictures).values({
           type: file.type,
           key: file.key,
@@ -36,6 +38,7 @@ export const ourFileRouter = {
           studentId: input.id,
         });
       } else if (input.for === "signature") {
+        await db.delete(signatures).where(eq(signatures.studentId, input.id));
         await db.insert(signatures).values({
           type: file.type,
           key: file.key,
