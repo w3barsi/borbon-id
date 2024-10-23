@@ -61,7 +61,8 @@ export function UploadPictureButton(props: UploadButton) {
       <Input
         type="file"
         className="hidden"
-        accept=".jpg,.jpeg"
+        accept="image/*"
+        capture={false}
         id={`${props.user.id}_${props.for}`}
         onChange={handleFileChange}
       />
