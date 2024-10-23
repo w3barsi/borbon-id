@@ -140,16 +140,6 @@ function FileDropdown(props: {
                 setIsOpen={setIsOpen}
               />
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onSelect={(e) => e.preventDefault()}
-            >
-              <UploadPictureButton
-                for={props.for}
-                user={{ id: props.user.id, fullName: props.user.fullName }}
-                setIsOpen={setIsOpen}
-              />
-            </DropdownMenuItem>
             {file?.url ? (
               <>
                 <DropdownMenuItem
