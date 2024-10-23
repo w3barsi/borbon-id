@@ -62,7 +62,6 @@ export function UploadPictureButton(props: UploadButton) {
         type="file"
         className="hidden"
         id={`${props.user.id}_${props.for}`}
-        accept="image/*"
         onChange={handleFileChange}
       />
     </label>
