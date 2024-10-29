@@ -124,7 +124,12 @@ function FileDropdown(props: {
     <AlertDialog>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="link" className="w-full p-0">
+          <Button
+            variant="link"
+            className={cn("w-full bg-red-100 p-0", {
+              "bg-green-100": file?.url,
+            })}
+          >
             {file?.url ? "Yes" : "No"}
           </Button>
         </DropdownMenuTrigger>
