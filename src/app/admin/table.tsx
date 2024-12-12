@@ -24,7 +24,6 @@ type PhotoDownload = {
 
 export default function DataTable() {
   const [students] = api.student.getStudents.useSuspenseQuery();
-  console.log(students);
   const [state, setState] = useState(new Map<string, boolean>());
 
   const addOrUpdate = (key: string) => {
@@ -35,8 +34,20 @@ export default function DataTable() {
       return updatedMap;
     });
   };
+
+  const copyAllData = async () => {
+    const a: string[] = [];
+    students.forEach((student) => {
+      a.push(
+        `GRADE ${student.grade}\t${student.lrn}\t${student.fullName}\t${student.emergencyName}\t${student.emergencyAddress}\t${student.emergencyNumber}`,
+      );
+    });
+
+    await navigator.clipboard.writeText(a.join("\n"));
+  };
+
   const handleCopy = async (student: GetStudentsOutputType) => {
-    const data = `GRADE ${student.grade}\t${student.lrn}\t${student.fullName}\t${student.emergencyName}\t${student.emergencyAddress}\t${student.emergencyNumber}`;
+    const data = `GRADE ${student.grade}\t${student.lrn}\t${student.fullName}\t${student.emergencyName}\t${student.emergencyAddress}\t${student.emergencyNumber}\nGRADE ${student.grade}\t${student.lrn}\t${student.fullName}\t${student.emergencyName}\t${student.emergencyAddress}\t${student.emergencyNumber}`;
 
     await navigator.clipboard.writeText(data);
   };
@@ -134,8 +145,9 @@ export default function DataTable() {
       <Container>
         <div className="flex gap-2">
           <div className="w-full"></div>
-          <Button onClick={downloadAllPhotos}>Download All Pictures</Button>
-          <Button onClick={downloadAllSignatures}>
+          <Button onClick={copyAllData}>Copy All Data</Button>
+          <Button onClick={bulkDownloadPhotos}>Download All Pictures</Button>
+          <Button onClick={bulkDownloadSignatures}>
             Download All Signatures
           </Button>
         </div>
