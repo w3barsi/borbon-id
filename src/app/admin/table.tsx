@@ -25,7 +25,16 @@ type PhotoDownload = {
 export default function DataTable() {
   const [students] = api.student.getStudents.useSuspenseQuery();
   console.log(students);
+  const [state, setState] = useState(new Map<string, boolean>());
 
+  const addOrUpdate = (key: string) => {
+    setState((prevMap) => {
+      const updatedMap = new Map(prevMap);
+      const prev = prevMap.get(key);
+      updatedMap.set(key, !prev);
+      return updatedMap;
+    });
+  };
   const handleCopy = async (student: GetStudentsOutputType) => {
     const data = `GRADE ${student.grade}\t${student.lrn}\t${student.fullName}\t${student.emergencyName}\t${student.emergencyAddress}\t${student.emergencyNumber}`;
 
@@ -166,7 +175,19 @@ export default function DataTable() {
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button onClick={() => handleCopy(student)}>Copy</Button>
+                  <Button
+                    className={cn({
+                      "bg-green-800 hover:bg-green-800": state.get(
+                        String(student.id),
+                      ),
+                    })}
+                    onClick={async () => {
+                      addOrUpdate(String(student.id));
+                      await handleCopy(student);
+                    }}
+                  >
+                    Copy
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
