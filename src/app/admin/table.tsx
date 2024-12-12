@@ -10,9 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { cn } from "~/lib/utils";
 import { GetStudentsOutputType } from "~/server/api/routers/students";
 import { api } from "~/trpc/react";
 import { saveAs } from "file-saver";
+import JSZip from "jszip";
+import { useState } from "react";
 
 type PhotoDownload = {
   name: string;
@@ -29,53 +32,72 @@ export default function DataTable() {
     await navigator.clipboard.writeText(data);
   };
 
-  const downloadAllPhotos = () => {
-    const links: PhotoDownload[] = [];
-    students.forEach((student) => {
-      links.push({
-        name: student.fullName!,
-        url: student.picture?.url,
-      });
+  const bulkDownloadPhotos = async () => {
+    console.log("Downloading");
+    const zip = new JSZip();
+
+    const fetchAndAddToZip = async (url: string, fileName: string) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+        const blob = await response.blob();
+        const type = blob.type.split("/");
+        const fn = fileName.replaceAll(".", " ");
+
+        zip.file(`${fn} PIC.${type[1]}`, blob);
+      } catch (error) {
+        console.error(`Error fetching ${url}:`, error);
+      }
+    };
+
+    const filePromises = students.map(async (s) => {
+      try {
+        if (s.picture === null || s.fullName === null)
+          throw new Error(`Failed to get pics for ${s.fullName}`);
+      } catch (e) {
+        return console.error(e);
+      }
+      return fetchAndAddToZip(s.picture.url!, s.fullName);
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    links.map(async (a) => {
-      try {
-        if (a.url) {
-          const res = await fetch(a.url);
-          if (!res.ok) throw new Error("Network response was not ok");
-          const blob = await res.blob();
-          const fileName = a.name.replaceAll(".", " ").replaceAll(" ", " ");
-          saveAs(blob, `${fileName}_PIC`);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    });
+    await Promise.all(filePromises);
+
+    const zipfile = await zip.generateAsync({ type: "blob" });
+    saveAs(zipfile, "pictures.zip");
   };
-  const downloadAllSignatures = () => {
-    const links: PhotoDownload[] = [];
-    students.forEach((student) => {
-      links.push({
-        name: student.fullName!,
-        url: student.signature?.url,
-      });
+
+  const bulkDownloadSignatures = async () => {
+    console.log("Downloading");
+    const zip = new JSZip();
+
+    const fetchAndAddToZip = async (url: string, fileName: string) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+        const blob = await response.blob();
+        const type = blob.type.split("/");
+        const fn = fileName.replaceAll(".", " ");
+
+        zip.file(`${fn} SIG.${type[1]}`, blob);
+      } catch (error) {
+        console.error(`Error fetching ${url}:`, error);
+      }
+    };
+
+    const filePromises = students.map(async (s) => {
+      try {
+        if (s.signature === null || s.fullName === null)
+          throw new Error(`Failed to get pics for ${s.fullName}`);
+      } catch (e) {
+        return console.error(e);
+      }
+      return fetchAndAddToZip(s.signature.url!, s.fullName);
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    links.map(async (a) => {
-      try {
-        if (a.url) {
-          const res = await fetch(a.url);
-          if (!res.ok) throw new Error("Network response was not ok");
-          const blob = await res.blob();
-          const fileName = a.name.replaceAll(".", " ").replaceAll(" ", " ");
-          saveAs(blob, `${fileName}_SIG`);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    });
+    await Promise.all(filePromises);
+
+    const zipfile = await zip.generateAsync({ type: "blob" });
+    saveAs(zipfile, "signatures.zip");
   };
 
   const downloadPhoto = async (
