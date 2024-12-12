@@ -1,3 +1,4 @@
+import { inferRouterOutputs } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { pictures, signatures, students } from "~/server/db/schema";
 import { utapi } from "~/server/uploadthing";
@@ -106,3 +107,8 @@ export const studentRouter = createTRPCRouter({
       return await ctx.db.delete(students).where(eq(students.id, input.id));
     }),
 });
+
+type StudentRouter = typeof studentRouter;
+type StudentRouteroutput = inferRouterOutputs<StudentRouter>;
+
+export type GetStudentsOutputType = StudentRouteroutput["getStudents"][0];
