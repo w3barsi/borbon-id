@@ -17,7 +17,7 @@ export default async function AdminPage() {
   const user = await currentUser();
   void api.student.getStudents.prefetch();
   if (!user) return redirect("/");
-  if (allowedUsers.includes(user?.id)) {
+  if (!allowedUsers.includes(user.id)) {
     return <Container>Cannot access page as {user?.id}</Container>;
   }
 
