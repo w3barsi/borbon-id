@@ -167,7 +167,8 @@ export default function DataTable() {
     saveAs(zipfile, "signatures.zip");
   };
 
-  const downloadPhoto = async (
+  const download = async (
+    pType: "signature" | "picture",
     url: string | null | undefined,
     fullName: string | null | undefined,
   ) => {
@@ -184,7 +185,11 @@ export default function DataTable() {
 
     const blob = await res.blob();
     const fileName = fullName.replaceAll(".", " ").replaceAll(" ", " ");
-    saveAs(blob, `${fileName}_PIC`);
+    if (pType === "picture") {
+      saveAs(blob, `${fileName}_PIC`);
+    } else {
+      saveAs(blob, `${fileName}_SIG`);
+    }
   };
 
   return (
@@ -253,7 +258,8 @@ export default function DataTable() {
               <TableHead className="">Emergency Number</TableHead>
               <TableHead className="">Emergency Address</TableHead>
               <TableHead>Printed</TableHead>
-              <TableHead className="text-center">Is Printed</TableHead>
+              <TableHead className="text-center">Photo</TableHead>
+              <TableHead className="text-center">Signature</TableHead>
               <TableHead className="text-center">Copy</TableHead>
             </TableRow>
           </TableHeader>
@@ -289,10 +295,27 @@ export default function DataTable() {
                   <TableCell>
                     <Button
                       onClick={() =>
-                        downloadPhoto(student.picture?.url, student.fullName)
+                        download(
+                          "picture",
+                          student.picture?.url,
+                          student.fullName,
+                        )
                       }
                     >
                       Download Photo
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      onClick={() =>
+                        download(
+                          "signature",
+                          student.signature?.url,
+                          student.fullName,
+                        )
+                      }
+                    >
+                      Download Signature
                     </Button>
                   </TableCell>
                   <TableCell>
