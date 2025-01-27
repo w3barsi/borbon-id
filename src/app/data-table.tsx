@@ -58,6 +58,7 @@ export default function DataTable() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-full">Full Name</TableHead>
+            <TableHead className="min-w-20 text-center">Is Printed</TableHead>
             <TableHead className="min-w-20 text-center">Picture</TableHead>
             <TableHead className="min-w-20 text-center">Signature</TableHead>
           </TableRow>
@@ -73,6 +74,9 @@ export default function DataTable() {
                 >
                   {student.fullName}
                 </Button>
+              </TableCell>
+              <TableCell className="text-center">
+                {student.isPrinted ? "🟩" : "🟥"}
               </TableCell>
               <TableCell>
                 <FileDropdown
