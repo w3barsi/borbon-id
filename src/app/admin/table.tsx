@@ -44,8 +44,33 @@ export default function DataTable() {
   const [sortBy, setSortBy] = useState<"asc" | "desc" | null>(null);
 
   useEffect(() => {
-    setSortedStudents(students);
-    console.log(students);
+    if (sortBy === "asc") {
+      setSortedStudents(
+        students.sort((a, b) => {
+          if (a.fullName! < b.fullName!) {
+            return -1; // a comes before b
+          }
+          if (a.fullName! > b.fullName!) {
+            return 1; // a comes after b
+          }
+          return 0; // a and b are equal
+        }),
+      );
+    } else if (sortBy === "desc") {
+      setSortedStudents(
+        students.sort((b, a) => {
+          if (a.fullName! < b.fullName!) {
+            return -1; // a comes before b
+          }
+          if (a.fullName! > b.fullName!) {
+            return 1; // a comes after b
+          }
+          return 0; // a and b are equal
+        }),
+      );
+    } else {
+      setSortedStudents(students);
+    }
   }, [students]);
 
   const addOrUpdate = (key: string) => {
