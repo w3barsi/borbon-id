@@ -94,7 +94,7 @@ export default function DataTable() {
   };
 
   const handleCopy = async (student: GetStudentsOutputType) => {
-    const data = `GRADE ${student.grade}\t${student.lrn}\t${student.fullName}\t${student.emergencyName}\t${student.emergencyAddress}\t${student.emergencyNumber}\nGRADE ${student.grade}\t${student.lrn}\t${student.fullName}\t${student.emergencyName}\t${student.emergencyAddress}\t${student.emergencyNumber}`;
+    const data = `GRADE ${student.grade}\t${student.lrn}\t${student.fullName}\t${student.emergencyName}\t${student.emergencyAddress}\t${student.emergencyNumber}`;
 
     await navigator.clipboard.writeText(data);
   };
