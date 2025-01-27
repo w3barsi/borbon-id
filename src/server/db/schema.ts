@@ -32,6 +32,8 @@ export const students = createTable("student", {
   emergencyNumber: text("emergency_number"),
   emergencyAddress: text("emergency_address"),
 
+  isPrinted: int("is_printed", { mode: "boolean" }).default(false),
+
   createdById: text("created_by").notNull(),
   createdByName: text("created_by_name").notNull(),
 

@@ -23,8 +23,15 @@ type PhotoDownload = {
 };
 
 export default function DataTable() {
+  const utils = api.useUtils();
+
   const [students] = api.student.getStudents.useSuspenseQuery();
   const [state, setState] = useState(new Map<string, boolean>());
+  const { mutate } = api.student.setIsPrinted.useMutation({
+    onSuccess: async () => {
+      await utils.student.getStudents.invalidate();
+    },
+  });
 
   const addOrUpdate = (key: string) => {
     setState((prevMap) => {
@@ -163,46 +170,67 @@ export default function DataTable() {
               <TableHead className="">Emergency Name</TableHead>
               <TableHead className="">Emergency Number</TableHead>
               <TableHead className="">Emergency Address</TableHead>
-              <TableHead className="">Is Printed</TableHead>
-              <TableHead className="">Copy</TableHead>
+              <TableHead>Printed</TableHead>
+              <TableHead className="text-center">Is Printed</TableHead>
+              <TableHead className="text-center">Copy</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {students.map((student) => (
-              <TableRow key={student.id}>
-                <TableCell>{student.lrn}</TableCell>
-                <TableCell>{student.fullName}</TableCell>
-                <TableCell>{student.grade}</TableCell>
-                <TableCell>{student.section}</TableCell>
-                <TableCell>{student.emergencyName}</TableCell>
-                <TableCell>{student.emergencyNumber}</TableCell>
-                <TableCell>{student.emergencyAddress}</TableCell>
-                <TableCell>
-                  <Button
-                    onClick={() =>
-                      downloadPhoto(student.picture?.url, student.fullName)
-                    }
-                  >
-                    Download Photo
-                  </Button>
-                </TableCell>
-                <TableCell>
-                  <Button
-                    className={cn({
-                      "bg-green-800 hover:bg-green-800": state.get(
-                        String(student.id),
-                      ),
-                    })}
-                    onClick={async () => {
-                      addOrUpdate(String(student.id));
-                      await handleCopy(student);
-                    }}
-                  >
-                    Copy
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {students.map((student) => {
+              let a = student.isPrinted;
+              return (
+                <TableRow key={student.id}>
+                  <TableCell>{student.lrn}</TableCell>
+                  <TableCell>{student.fullName}</TableCell>
+                  <TableCell>{student.grade}</TableCell>
+                  <TableCell>{student.section}</TableCell>
+                  <TableCell>{student.emergencyName}</TableCell>
+                  <TableCell>{student.emergencyNumber}</TableCell>
+                  <TableCell>{student.emergencyAddress}</TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      className={cn(
+                        a &&
+                          "border border-green-300 bg-green-200 hover:bg-green-500",
+                        !a &&
+                          "border border-red-300 bg-red-200 hover:bg-red-500",
+                      )}
+                      onClick={async () => {
+                        a = !a;
+                        mutate({
+                          id: student.id,
+                          printStatus: student.isPrinted!,
+                        });
+                      }}
+                    ></Button>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      onClick={() =>
+                        downloadPhoto(student.picture?.url, student.fullName)
+                      }
+                    >
+                      Download Photo
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      className={cn({
+                        "bg-green-800 hover:bg-green-800": state.get(
+                          String(student.id),
+                        ),
+                      })}
+                      onClick={async () => {
+                        addOrUpdate(String(student.id));
+                        await handleCopy(student);
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </Container>

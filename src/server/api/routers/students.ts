@@ -1,4 +1,4 @@
-import { inferRouterOutputs } from "@trpc/server";
+import { type inferRouterOutputs } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { pictures, signatures, students } from "~/server/db/schema";
 import { utapi } from "~/server/uploadthing";
@@ -6,6 +6,14 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 export const studentRouter = createTRPCRouter({
+  setIsPrinted: protectedProcedure
+    .input(z.object({ id: z.number(), printStatus: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(students)
+        .set({ isPrinted: !input.printStatus })
+        .where(eq(students.id, input.id));
+    }),
   getStudents: protectedProcedure.query(async ({ ctx }) => {
     const data = ctx.db.query.students.findMany({
       orderBy: (students, { desc }) => [desc(students.createdAt)],
