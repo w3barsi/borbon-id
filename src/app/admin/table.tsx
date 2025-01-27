@@ -11,11 +11,18 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { cn } from "~/lib/utils";
-import { GetStudentsOutputType } from "~/server/api/routers/students";
+import { type GetStudentsOutputType } from "~/server/api/routers/students";
 import { api } from "~/trpc/react";
 import { saveAs } from "file-saver";
 import JSZip from "jszip";
-import { useState } from "react";
+import {
+  ArrowDownAz,
+  ArrowDownZa,
+  ArrowUpAz,
+  ArrowUpDown,
+  ArrowUpZa,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
 type PhotoDownload = {
   name: string;
@@ -32,6 +39,14 @@ export default function DataTable() {
       await utils.student.getStudents.invalidate();
     },
   });
+
+  const [sortedStudents, setSortedStudents] = useState(students);
+  const [sortBy, setSortBy] = useState<"asc" | "desc" | null>(null);
+
+  useEffect(() => {
+    setSortedStudents(students);
+    console.log(students);
+  }, [students]);
 
   const addOrUpdate = (key: string) => {
     setState((prevMap) => {
@@ -164,7 +179,49 @@ export default function DataTable() {
           <TableHeader>
             <TableRow>
               <TableHead className="">LRN</TableHead>
-              <TableHead className="">Full Name</TableHead>
+              <TableHead
+                className="group flex cursor-pointer items-center justify-between hover:bg-neutral-200"
+                onClick={() => {
+                  if (sortBy === null || sortBy === "desc") {
+                    setSortBy("asc");
+                    setSortedStudents(
+                      students.sort((a, b) => {
+                        if (a.fullName! < b.fullName!) {
+                          return -1; // a comes before b
+                        }
+                        if (a.fullName! > b.fullName!) {
+                          return 1; // a comes after b
+                        }
+                        return 0; // a and b are equal
+                      }),
+                    );
+                  } else if (sortBy === "asc") {
+                    setSortBy("desc");
+                    setSortedStudents(
+                      students.sort((b, a) => {
+                        if (a.fullName! < b.fullName!) {
+                          return -1; // a comes before b
+                        }
+                        if (a.fullName! > b.fullName!) {
+                          return 1; // a comes after b
+                        }
+                        return 0; // a and b are equal
+                      }),
+                    );
+                  }
+                }}
+              >
+                <span>Full Name</span>
+                <span className="flex h-5 w-5 items-center justify-center rounded-full text-center group-hover:bg-neutral-300">
+                  {sortBy === "asc" ? (
+                    <ArrowUpAz size={15} />
+                  ) : sortBy === "desc" ? (
+                    <ArrowDownZa size={15} />
+                  ) : (
+                    <ArrowUpDown size={15} />
+                  )}
+                </span>
+              </TableHead>
               <TableHead className="">Grade</TableHead>
               <TableHead className="">Section</TableHead>
               <TableHead className="">Emergency Name</TableHead>
@@ -176,7 +233,7 @@ export default function DataTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {students.map((student) => {
+            {sortedStudents.map((student) => {
               let a = student.isPrinted;
               return (
                 <TableRow key={student.id}>
