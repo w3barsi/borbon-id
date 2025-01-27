@@ -301,6 +301,7 @@ export default function DataTable() {
                           student.fullName,
                         )
                       }
+                      disabled={student.picture === null}
                     >
                       Download Photo
                     </Button>
@@ -314,6 +315,8 @@ export default function DataTable() {
                           student.fullName,
                         )
                       }
+                      className=""
+                      disabled={student.signature === null}
                     >
                       Download Signature
                     </Button>
