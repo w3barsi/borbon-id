@@ -24,6 +24,7 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { formatDateTimeToMMDDYY } from "~/utils/date";
 
 type EditStudentDialog = {
   isOpen: boolean;
@@ -42,16 +43,7 @@ const formSchema = z.object({
   emergencyAddress: z.string().optional(),
 });
 
-function formatDateTimeToMMDDYY(date: Date) {
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
-  const year = date.getFullYear().toString().slice(-2);
 
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-
-  return `${month}/${day}/${year} ${hours}:${minutes}`;
-}
 
 export default function EditStudentDialog(props: EditStudentDialog) {
   const utils = api.useUtils();
@@ -131,9 +123,9 @@ export default function EditStudentDialog(props: EditStudentDialog) {
             <DialogTitle>Edit Student</DialogTitle>
             {student ? (
               <DialogDescription>
-                <p>Created at: <span className="font-bold">{formatDateTimeToMMDDYY(student?.createdAt)}</span></p>
+                <p>Created at: <span className="font-bold">{student?.createdAt.toLocaleString()}</span></p>
                 {student?.updatedAt &&
-                  <p>Updated at: <span className="font-bold">{formatDateTimeToMMDDYY(student?.updatedAt)}</span></p>
+                  <p>Updated at: <span className="font-bold">{student?.updatedAt.toLocaleString()}</span></p>
                 }
               </DialogDescription>
             ) : null}

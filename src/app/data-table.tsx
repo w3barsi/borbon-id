@@ -58,6 +58,7 @@ export default function DataTable() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-full">Full Name</TableHead>
+            <TableHead className="min-w-60 text-center">Created on</TableHead>
             <TableHead className="min-w-20 text-center">Is Printed</TableHead>
             <TableHead className="min-w-20 text-center">Picture</TableHead>
             <TableHead className="min-w-20 text-center">Signature</TableHead>
@@ -74,6 +75,9 @@ export default function DataTable() {
                 >
                   {student.fullName}
                 </Button>
+              </TableCell>
+              <TableCell>
+                <p className="text-center">{student.createdAt.toLocaleString()}</p>
               </TableCell>
               <TableCell className="text-center">
                 {student.isPrinted ? "🟩" : "🟥"}
