@@ -42,6 +42,17 @@ const formSchema = z.object({
   emergencyAddress: z.string().optional(),
 });
 
+function formatDateTimeToMMDDYY(date: Date) {
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  const year = date.getFullYear().toString().slice(-2);
+
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+
+  return `${month}/${day}/${year} ${hours}:${minutes}`;
+}
+
 export default function EditStudentDialog(props: EditStudentDialog) {
   const utils = api.useUtils();
   const [toastId, setToastId] = useState<number | string>();
@@ -118,7 +129,14 @@ export default function EditStudentDialog(props: EditStudentDialog) {
         ) : (
           <>
             <DialogTitle>Edit Student</DialogTitle>
-            <DialogDescription></DialogDescription>
+            {student ? (
+              <DialogDescription>
+                <p>Created at: <span className="font-bold">{formatDateTimeToMMDDYY(student?.createdAt)}</span></p>
+                {student?.updatedAt &&
+                  <p>Updated at: <span className="font-bold">{formatDateTimeToMMDDYY(student?.updatedAt)}</span></p>
+                }
+              </DialogDescription>
+            ) : null}
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
