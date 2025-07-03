@@ -1,7 +1,14 @@
 "use client";
 
+import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { Container } from "~/components/container";
 import { Button } from "~/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -15,14 +22,8 @@ import { type GetStudentsOutputType } from "~/server/api/routers/students";
 import { api } from "~/trpc/react";
 import { saveAs } from "file-saver";
 import JSZip from "jszip";
-import {
-  ArrowDownAz,
-  ArrowDownZa,
-  ArrowUpAz,
-  ArrowUpDown,
-  ArrowUpZa,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 type PhotoDownload = {
   name: string;
@@ -40,38 +41,28 @@ export default function DataTable() {
     },
   });
 
-  const [sortedStudents, setSortedStudents] = useState(students);
-  const [sortBy, setSortBy] = useState<"asc" | "desc" | null>(null);
+  const { mutate: archive } = api.student.archive.useMutation({
+    onSuccess: async () => {
+      await utils.student.getStudents.invalidate();
+    },
+  });
 
-  useEffect(() => {
-    if (sortBy === "asc") {
-      setSortedStudents(
-        students.sort((a, b) => {
-          if (a.fullName! < b.fullName!) {
-            return -1; // a comes before b
-          }
-          if (a.fullName! > b.fullName!) {
-            return 1; // a comes after b
-          }
-          return 0; // a and b are equal
-        }),
-      );
-    } else if (sortBy === "desc") {
-      setSortedStudents(
-        students.sort((b, a) => {
-          if (a.fullName! < b.fullName!) {
-            return -1; // a comes before b
-          }
-          if (a.fullName! > b.fullName!) {
-            return 1; // a comes after b
-          }
-          return 0; // a and b are equal
-        }),
-      );
-    } else {
-      setSortedStudents(students);
-    }
-  }, [students]);
+  const [filter, setFilter] = useState<"new" | "all" | "archived">("new");
+
+  const isStudentComplete = (student: GetStudentsOutputType) => {
+    return (
+      student.lrn &&
+      student.fullName &&
+      student.grade &&
+      student.section &&
+      student.emergencyName &&
+      student.emergencyAddress &&
+      student.emergencyNumber &&
+      student.picture &&
+      student.signature &&
+      !student.isPrinted
+    );
+  };
 
   const addOrUpdate = (key: string) => {
     setState((prevMap) => {
@@ -84,9 +75,10 @@ export default function DataTable() {
 
   const copyAllData = async () => {
     const a: string[] = [];
-    students.forEach((student) => {
+    const filteredStudents = filter === "new" ? students.filter((s) => !s.isArchived) : students;
+    filteredStudents.forEach((student) => {
       a.push(
-        `GRADE ${student.grade}\t${student.lrn}\t${student.fullName}\t${student.emergencyName}\t${student.emergencyAddress}\t${student.emergencyNumber}`,
+        `GRADE ${student.grade ?? ""}\t${student.lrn ?? ""}\t${student.fullName ?? ""}\t${student.emergencyName ?? ""}\t${student.emergencyAddress ?? ""}\t${student.emergencyNumber ?? ""}`,
       );
     });
 
@@ -94,7 +86,8 @@ export default function DataTable() {
   };
 
   const handleCopy = async (student: GetStudentsOutputType) => {
-    const data = `GRADE ${student.grade}\t${student.lrn}\t${student.fullName}\t${student.emergencyName}\t${student.emergencyAddress}\t${student.emergencyNumber}`;
+    console.log(student)
+    const data = `GRADE ${student.grade ?? ""}	${student.lrn ?? ""}	${student.fullName ?? ""}	${student.emergencyName ?? ""}	${student.emergencyAddress ?? ""}	${student.emergencyNumber ?? ""}`;
 
     await navigator.clipboard.writeText(data);
   };
@@ -117,7 +110,9 @@ export default function DataTable() {
       }
     };
 
-    const filePromises = students.map(async (s) => {
+    const filteredStudents = filter === "new" ? students.filter((s) => !s.isArchived) : students;
+
+    const filePromises = filteredStudents.map(async (s) => {
       try {
         if (s.picture === null || s.fullName === null)
           throw new Error(`Failed to get pics for ${s.fullName}`);
@@ -151,7 +146,9 @@ export default function DataTable() {
       }
     };
 
-    const filePromises = students.map(async (s) => {
+    const filteredStudents = filter === "new" ? students.filter((s) => !s.isArchived) : students;
+
+    const filePromises = filteredStudents.map(async (s) => {
       try {
         if (s.signature === null || s.fullName === null)
           throw new Error(`Failed to get pics for ${s.fullName}`);
@@ -195,13 +192,57 @@ export default function DataTable() {
   return (
     <div>
       <Container>
-        <div className="flex gap-2">
-          <div className="w-full"></div>
-          <Button onClick={copyAllData}>Copy All Data</Button>
-          <Button onClick={bulkDownloadPhotos}>Download All Pictures</Button>
-          <Button onClick={bulkDownloadSignatures}>
-            Download All Signatures
-          </Button>
+        <div className="flex items-center justify-between gap-2">
+          <div
+            id="tabs"
+            className="flex gap-2 rounded-lg bg-neutral-200/50 p-1"
+          >
+            <Button
+              onClick={() => setFilter("new")}
+              className={cn(
+                filter === "new"
+                  ? "bg-black text-white hover:bg-black/90"
+                  : "bg-transparent text-neutral-800 shadow-none hover:bg-neutral-400/20",
+              )}
+            >
+              New Students
+            </Button>
+            <Button
+              onClick={() => setFilter("all")}
+              className={cn(
+                filter === "all"
+                  ? "bg-black text-white hover:bg-black/90"
+                  : "bg-transparent text-neutral-800 shadow-none hover:bg-neutral-400/20",
+              )}
+            >
+              All Students
+            </Button>
+            <Button
+              onClick={() => setFilter("archived")}
+              className={cn(
+                filter === "archived"
+                  ? "bg-black text-white hover:bg-black/90"
+                  : "bg-transparent text-neutral-800 shadow-none hover:bg-neutral-400/20",
+              )}
+            >
+              Archive
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={copyAllData}>Copy All Data</Button>
+            <Button onClick={async () => toast.promise(bulkDownloadPhotos, {
+              loading: "Preparing to download photos...",
+              success: "Successfully downloaded photos!",
+              error: "Failed to download signatures",
+            })}>Download All Pictures</Button>
+            <Button onClick={async () => toast.promise(bulkDownloadSignatures, {
+              loading: "Preparing to download signatures...",
+              success: "Successfully downloaded signatures!",
+              error: "Failed to download signatures",
+            })}>
+              Download All Signatures
+            </Button>
+          </div>
         </div>
       </Container>
       <Container>
@@ -209,48 +250,8 @@ export default function DataTable() {
           <TableHeader>
             <TableRow>
               <TableHead className="">LRN</TableHead>
-              <TableHead
-                className="group flex cursor-pointer items-center justify-between hover:bg-neutral-200"
-                onClick={() => {
-                  if (sortBy === null || sortBy === "desc") {
-                    setSortBy("asc");
-                    setSortedStudents(
-                      students.sort((a, b) => {
-                        if (a.fullName! < b.fullName!) {
-                          return -1; // a comes before b
-                        }
-                        if (a.fullName! > b.fullName!) {
-                          return 1; // a comes after b
-                        }
-                        return 0; // a and b are equal
-                      }),
-                    );
-                  } else if (sortBy === "asc") {
-                    setSortBy("desc");
-                    setSortedStudents(
-                      students.sort((b, a) => {
-                        if (a.fullName! < b.fullName!) {
-                          return -1; // a comes before b
-                        }
-                        if (a.fullName! > b.fullName!) {
-                          return 1; // a comes after b
-                        }
-                        return 0; // a and b are equal
-                      }),
-                    );
-                  }
-                }}
-              >
+              <TableHead className="group flex cursor-pointer items-center justify-between hover:bg-neutral-200">
                 <span>Full Name</span>
-                <span className="flex h-5 w-5 items-center justify-center rounded-full text-center group-hover:bg-neutral-300">
-                  {sortBy === "asc" ? (
-                    <ArrowUpAz size={15} />
-                  ) : sortBy === "desc" ? (
-                    <ArrowDownZa size={15} />
-                  ) : (
-                    <ArrowUpDown size={15} />
-                  )}
-                </span>
               </TableHead>
               <TableHead className="">Grade</TableHead>
               <TableHead className="">Section</TableHead>
@@ -258,87 +259,308 @@ export default function DataTable() {
               <TableHead className="">Emergency Number</TableHead>
               <TableHead className="">Emergency Address</TableHead>
               <TableHead>Printed</TableHead>
-              <TableHead className="text-center">Photo</TableHead>
-              <TableHead className="text-center">Signature</TableHead>
-              <TableHead className="text-center">Copy</TableHead>
+              <TableHead>Archived</TableHead>
+              <TableHead>Last Updated</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedStudents.map((student) => {
-              let a = student.isPrinted;
-              return (
-                <TableRow key={student.id}>
-                  <TableCell>{student.lrn}</TableCell>
-                  <TableCell>{student.fullName}</TableCell>
-                  <TableCell>{student.grade}</TableCell>
-                  <TableCell>{student.section}</TableCell>
-                  <TableCell>{student.emergencyName}</TableCell>
-                  <TableCell>{student.emergencyNumber}</TableCell>
-                  <TableCell>{student.emergencyAddress}</TableCell>
-                  <TableCell className="text-center">
-                    <Button
-                      className={cn(
-                        a &&
-                          "border border-green-300 bg-green-200 hover:bg-green-500",
-                        !a &&
-                          "border border-red-300 bg-red-200 hover:bg-red-500",
-                      )}
-                      onClick={async () => {
-                        a = !a;
-                        mutate({
-                          id: student.id,
-                          printStatus: student.isPrinted!,
-                        });
-                      }}
-                    ></Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      onClick={() =>
-                        download(
-                          "picture",
-                          student.picture?.url,
-                          student.fullName,
-                        )
-                      }
-                      disabled={student.picture === null}
-                    >
-                      Download Photo
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      onClick={() =>
-                        download(
-                          "signature",
-                          student.signature?.url,
-                          student.fullName,
-                        )
-                      }
-                      className=""
-                      disabled={student.signature === null}
-                    >
-                      Download Signature
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      className={cn({
-                        "bg-green-800 hover:bg-green-800": state.get(
-                          String(student.id),
-                        ),
-                      })}
-                      onClick={async () => {
-                        addOrUpdate(String(student.id));
-                        await handleCopy(student);
-                      }}
-                    >
-                      Copy
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {filter === "new"
+              ? students
+                  .filter((student) => !student.isArchived)
+                  .map((student) => {
+                    let a = student.isPrinted;
+                    return (
+                      <TableRow key={student.id}>
+                        <TableCell>{student.lrn}</TableCell>
+                        <TableCell>{student.fullName}</TableCell>
+                        <TableCell>{student.grade}</TableCell>
+                        <TableCell>{student.section}</TableCell>
+                        <TableCell>{student.emergencyName}</TableCell>
+                        <TableCell>{student.emergencyNumber}</TableCell>
+                        <TableCell>{student.emergencyAddress}</TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            className={cn(
+                              a &&
+                                "border border-green-300 bg-green-200 hover:bg-green-500",
+                              !a &&
+                                "border border-red-300 bg-red-200 hover:bg-red-500",
+                            )}
+                            onClick={async () => {
+                              a = !a;
+                              mutate({
+                                id: student.id,
+                                printStatus: student.isPrinted!,
+                              });
+                            }}
+                          ></Button>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            onClick={() => {
+                              console.log(student.isArchived)
+                              archive({
+                                id: student.id,
+                                archive: student.isArchived,
+                              });
+                            }}
+                          >
+                            Archive
+                          </Button>
+                        </TableCell>
+                        <TableCell>{student.updatedAt?.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                className={cn(
+                                  "h-8 w-8 p-0",
+                                  isStudentComplete(student) &&
+                                    "bg-green-400 hover:bg-green-500",
+                                )}
+                              >
+                                <span className="sr-only">Open menu</span>
+                                <DotsHorizontalIcon className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  download(
+                                    "picture",
+                                    student.picture?.url,
+                                    student.fullName,
+                                  )
+                                }
+                                disabled={student.picture === null}
+                              >
+                                Download Photo
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  download(
+                                    "signature",
+                                    student.signature?.url,
+                                    student.fullName,
+                                  )
+                                }
+                                disabled={student.signature === null}
+                              >
+                                Download Signature
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  addOrUpdate(String(student.id));
+                                  await handleCopy(student);
+                                }}
+                              >
+                                Copy
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+              : null}
+            {filter === "all"
+              ? students.map((student) => {
+                  let a = student.isPrinted;
+                  return (
+                    <TableRow key={student.id}>
+                      <TableCell>{student.lrn}</TableCell>
+                      <TableCell>{student.fullName}</TableCell>
+                      <TableCell>{student.grade}</TableCell>
+                      <TableCell>{student.section}</TableCell>
+                      <TableCell>{student.emergencyName}</TableCell>
+                      <TableCell>{student.emergencyNumber}</TableCell>
+                      <TableCell>{student.emergencyAddress}</TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          className={cn(
+                            a &&
+                              "border border-green-300 bg-green-200 hover:bg-green-500",
+                            !a &&
+                              "border border-red-300 bg-red-200 hover:bg-red-500",
+                          )}
+                          onClick={async () => {
+                            a = !a;
+                            mutate({
+                              id: student.id,
+                              printStatus: student.isPrinted!,
+                            });
+                          }}
+                        ></Button>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          onClick={() => {
+                            archive({
+                              id: student.id,
+                              archive: student.isArchived,
+                            });
+                          }}
+                        >
+                          Archive
+                        </Button>
+                      </TableCell>
+                      <TableCell>{student.updatedAt?.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className={cn(
+                                "h-8 w-8 p-0",
+                                isStudentComplete(student) &&
+                                  "bg-green-400 hover:bg-green-500",
+                              )}
+                            >
+                              <span className="sr-only">Open menu</span>
+                              <DotsHorizontalIcon className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() =>
+                                download(
+                                  "picture",
+                                  student.picture?.url,
+                                  student.fullName,
+                                )
+                              }
+                              disabled={student.picture === null}
+                            >
+                              Download Photo
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                download(
+                                  "signature",
+                                  student.signature?.url,
+                                  student.fullName,
+                                )
+                              }
+                              disabled={student.signature === null}
+                            >
+                              Download Signature
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={async () => {
+                                addOrUpdate(String(student.id));
+                                await handleCopy(student);
+                              }}
+                            >
+                              Copy
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              : null}
+            {filter === "archived"
+              ? students
+                  .filter((student) => student.isArchived)
+                  .map((student) => {
+                    let a = student.isPrinted;
+                    return (
+                      <TableRow key={student.id}>
+                        <TableCell>{student.lrn}</TableCell>
+                        <TableCell>{student.fullName}</TableCell>
+                        <TableCell>{student.grade}</TableCell>
+                        <TableCell>{student.section}</TableCell>
+                        <TableCell>{student.emergencyName}</TableCell>
+                        <TableCell>{student.emergencyNumber}</TableCell>
+                        <TableCell>{student.emergencyAddress}</TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            className={cn(
+                              a &&
+                                "border border-green-300 bg-green-200 hover:bg-green-500",
+                              !a &&
+                                "border border-red-300 bg-red-200 hover:bg-red-500",
+                            )}
+                            onClick={async () => {
+                              a = !a;
+                              mutate({
+                                id: student.id,
+                                printStatus: student.isPrinted!,
+                              });
+                            }}
+                          ></Button>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            onClick={() => {
+                              archive({
+                                id: student.id,
+                                archive: student.isArchived,
+                              });
+                            }}
+                          >
+                            Archive
+                          </Button>
+                        </TableCell>
+                        <TableCell>{student.updatedAt?.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                className={cn(
+                                  "h-8 w-8 p-0",
+                                  isStudentComplete(student) &&
+                                    "bg-green-400 hover:bg-green-500",
+                                )}
+                              >
+                                <span className="sr-only">Open menu</span>
+                                <DotsHorizontalIcon className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  download(
+                                    "picture",
+                                    student.picture?.url,
+                                    student.fullName,
+                                  )
+                                }
+                                disabled={student.picture === null}
+                              >
+                                Download Photo
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  download(
+                                    "signature",
+                                    student.signature?.url,
+                                    student.fullName,
+                                  )
+                                }
+                                disabled={student.signature === null}
+                              >
+                                Download Signature
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  addOrUpdate(String(student.id));
+                                  await handleCopy(student);
+                                }}
+                              >
+                                Copy
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+              : null}
           </TableBody>
         </Table>
       </Container>

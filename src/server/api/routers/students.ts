@@ -6,6 +6,14 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 export const studentRouter = createTRPCRouter({
+  archive: protectedProcedure
+    .input(z.object({ id: z.number(), archive: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(students)
+        .set({ isArchived: !input.archive })
+        .where(eq(students.id, input.id));
+    }),
   setIsPrinted: protectedProcedure
     .input(z.object({ id: z.number(), printStatus: z.boolean() }))
     .mutation(async ({ ctx, input }) => {

@@ -37,6 +37,8 @@ export const students = createTable("student", {
   createdById: text("created_by").notNull(),
   createdByName: text("created_by_name").notNull(),
 
+  isArchived: int("is_archived", { mode: "boolean" }).default(false).notNull(),
+
   ...timestamp,
 });
 
