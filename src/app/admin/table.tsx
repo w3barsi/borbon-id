@@ -77,19 +77,33 @@ export default function DataTable() {
     const a: string[] = [];
     const filteredStudents = filter === "new" ? students.filter((s) => !s.isArchived) : students;
     filteredStudents.forEach((student) => {
+      const grade = (student.grade ?? "").toString().trim();
+      const lrn = (student.lrn ?? "").trim();
+      const fullName = (student.fullName ?? "").trim();
+      const emergencyName = (student.emergencyName ?? "").trim();
+      const emergencyAddress = (student.emergencyAddress ?? "").trim();
+      const emergencyNumber = (student.emergencyNumber ?? "").trim();
       a.push(
-        `GRADE ${student.grade ?? ""}\t${student.lrn ?? ""}\t${student.fullName ?? ""}\t${student.emergencyName ?? ""}\t${student.emergencyAddress ?? ""}\t${student.emergencyNumber ?? ""}`,
+        `GRADE ${grade}\t${lrn}\t${fullName}\t${emergencyName}\t${emergencyAddress}\t${emergencyNumber}`,
       );
     });
 
     await navigator.clipboard.writeText(a.join("\n"));
+    toast.success("Copied all data to clipboard!");
   };
 
   const handleCopy = async (student: GetStudentsOutputType) => {
     console.log(student)
-    const data = `GRADE ${student.grade ?? ""}	${student.lrn ?? ""}	${student.fullName ?? ""}	${student.emergencyName ?? ""}	${student.emergencyAddress ?? ""}	${student.emergencyNumber ?? ""}`;
+    const grade = (student.grade ?? "").toString().trim();
+    const lrn = (student.lrn ?? "").trim();
+    const fullName = (student.fullName ?? "").trim();
+    const emergencyName = (student.emergencyName ?? "").trim();
+    const emergencyAddress = (student.emergencyAddress ?? "").trim();
+    const emergencyNumber = (student.emergencyNumber ?? "").trim();
+    const data = `GRADE ${grade}	${lrn}	${fullName}	${emergencyName}	${emergencyAddress}	${emergencyNumber}`;
 
     await navigator.clipboard.writeText(data);
+    toast.success("Copied student data to clipboard!");
   };
 
   const bulkDownloadPhotos = async () => {
