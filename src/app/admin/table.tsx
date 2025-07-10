@@ -75,7 +75,8 @@ export default function DataTable() {
 
   const copyAllData = async () => {
     const a: string[] = [];
-    const filteredStudents = filter === "new" ? students.filter((s) => !s.isArchived) : students;
+    const filteredStudents =
+      filter === "new" ? students.filter((s) => !s.isArchived) : students;
     filteredStudents.forEach((student) => {
       const grade = (student.grade ?? "").toString().trim();
       const lrn = (student.lrn ?? "").trim();
@@ -93,7 +94,7 @@ export default function DataTable() {
   };
 
   const handleCopy = async (student: GetStudentsOutputType) => {
-    console.log(student)
+    console.log(student);
     const grade = (student.grade ?? "").toString().trim();
     const lrn = (student.lrn ?? "").trim();
     const fullName = (student.fullName ?? "").trim();
@@ -124,7 +125,8 @@ export default function DataTable() {
       }
     };
 
-    const filteredStudents = filter === "new" ? students.filter((s) => !s.isArchived) : students;
+    const filteredStudents =
+      filter === "new" ? students.filter((s) => !s.isArchived) : students;
 
     const filePromises = filteredStudents.map(async (s) => {
       try {
@@ -160,7 +162,8 @@ export default function DataTable() {
       }
     };
 
-    const filteredStudents = filter === "new" ? students.filter((s) => !s.isArchived) : students;
+    const filteredStudents =
+      filter === "new" ? students.filter((s) => !s.isArchived) : students;
 
     const filePromises = filteredStudents.map(async (s) => {
       try {
@@ -244,16 +247,26 @@ export default function DataTable() {
           </div>
           <div className="flex gap-2">
             <Button onClick={copyAllData}>Copy All Data</Button>
-            <Button onClick={async () => toast.promise(bulkDownloadPhotos, {
-              loading: "Preparing to download photos...",
-              success: "Successfully downloaded photos!",
-              error: "Failed to download signatures",
-            })}>Download All Pictures</Button>
-            <Button onClick={async () => toast.promise(bulkDownloadSignatures, {
-              loading: "Preparing to download signatures...",
-              success: "Successfully downloaded signatures!",
-              error: "Failed to download signatures",
-            })}>
+            <Button
+              onClick={async () =>
+                toast.promise(bulkDownloadPhotos, {
+                  loading: "Preparing to download photos...",
+                  success: "Successfully downloaded photos!",
+                  error: "Failed to download signatures",
+                })
+              }
+            >
+              Download All Pictures
+            </Button>
+            <Button
+              onClick={async () =>
+                toast.promise(bulkDownloadSignatures, {
+                  loading: "Preparing to download signatures...",
+                  success: "Successfully downloaded signatures!",
+                  error: "Failed to download signatures",
+                })
+              }
+            >
               Download All Signatures
             </Button>
           </div>
@@ -313,17 +326,19 @@ export default function DataTable() {
                         <TableCell>
                           <Button
                             onClick={() => {
-                              console.log(student.isArchived)
+                              console.log(student.isArchived);
                               archive({
                                 id: student.id,
                                 archive: student.isArchived,
                               });
                             }}
                           >
-                            Archive
+                            {student.isArchived ? "Unarchive" : "Archive"}
                           </Button>
                         </TableCell>
-                        <TableCell>{student.updatedAt?.toLocaleString()}</TableCell>
+                        <TableCell>
+                          {student.updatedAt?.toLocaleString()}
+                        </TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -417,10 +432,12 @@ export default function DataTable() {
                             });
                           }}
                         >
-                          Archive
+                          {student.isArchived ? "Unarchive" : "Archive"}
                         </Button>
                       </TableCell>
-                      <TableCell>{student.createdAt?.toLocaleString()}</TableCell>
+                      <TableCell>
+                        {student.createdAt?.toLocaleString()}
+                      </TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -516,10 +533,12 @@ export default function DataTable() {
                               });
                             }}
                           >
-                            Archive
+                            {student.isArchived ? "Unarchive" : "Archive"}
                           </Button>
                         </TableCell>
-                        <TableCell>{student.updatedAt?.toLocaleString()}</TableCell>
+                        <TableCell>
+                          {student.updatedAt?.toLocaleString()}
+                        </TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
