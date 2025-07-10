@@ -274,7 +274,7 @@ export default function DataTable() {
               <TableHead className="">Emergency Address</TableHead>
               <TableHead>Printed</TableHead>
               <TableHead>Archived</TableHead>
-              <TableHead>Last Updated</TableHead>
+              <TableHead>Created At</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -420,7 +420,7 @@ export default function DataTable() {
                           Archive
                         </Button>
                       </TableCell>
-                      <TableCell>{student.updatedAt?.toLocaleString()}</TableCell>
+                      <TableCell>{student.createdAt?.toLocaleString()}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
