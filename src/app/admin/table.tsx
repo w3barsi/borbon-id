@@ -25,15 +25,11 @@ import JSZip from "jszip";
 import { useState } from "react";
 import { toast } from "sonner";
 
-type PhotoDownload = {
-  name: string;
-  url: string | null | undefined;
-};
-
 export default function DataTable() {
   const utils = api.useUtils();
 
   const [students] = api.student.getStudents.useSuspenseQuery();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [state, setState] = useState(new Map<string, boolean>());
   const { mutate } = api.student.setIsPrinted.useMutation({
     onSuccess: async () => {
@@ -337,7 +333,7 @@ export default function DataTable() {
                           </Button>
                         </TableCell>
                         <TableCell>
-                          {student.updatedAt?.toLocaleString()}
+                          {student.createdAt?.toLocaleString()}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -537,7 +533,7 @@ export default function DataTable() {
                           </Button>
                         </TableCell>
                         <TableCell>
-                          {student.updatedAt?.toLocaleString()}
+                          {student.createdAt?.toLocaleString()}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
