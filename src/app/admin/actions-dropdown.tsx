@@ -52,7 +52,7 @@ export function ActionsDropdown({
         : students;
     filteredStudents.forEach((student) => {
       const grade = (student.grade ?? "").toString().trim();
-      const lrn = (student.lrn ?? "").trim();
+      const lrn = (student.lrn ?? "").trim().split(" ").join("");
       const fullName = (student.fullName ?? "").trim();
       const emergencyName = (student.emergencyName ?? "").trim();
       const emergencyAddress = (student.emergencyAddress ?? "").trim();
