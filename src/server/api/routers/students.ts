@@ -1,5 +1,9 @@
 import { type inferRouterOutputs } from "@trpc/server";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import {
+  authedProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from "~/server/api/trpc";
 import { pictures, signatures, students } from "~/server/db/schema";
 import { utapi } from "~/server/uploadthing";
 import { eq } from "drizzle-orm";
@@ -45,7 +49,7 @@ export const studentRouter = createTRPCRouter({
         },
       });
     }),
-  createStudent: protectedProcedure
+  createStudent: authedProcedure
     .input(
       z.object({
         fullName: z.string().optional(), // Optional string

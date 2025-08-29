@@ -6,7 +6,7 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { db } from "~/server/db";
 import superjson from "superjson";
@@ -26,7 +26,7 @@ import { ZodError } from "zod";
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const start = Date.now();
-  const user = await currentUser();
+  const user = await auth();
   const end = Date.now();
   console.log(
     `[TRPC | CLERK] Getting clerk auth took took ${end - start}ms to execute`,
@@ -34,7 +34,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 
   return {
     db,
-    session: user,
+    user: user.userId,
     ...opts,
   };
 };
@@ -113,13 +113,25 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
-  if (!ctx.session?.id) {
+  if (!ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
   return next({
     ctx: {
       // infers the `session` as non-nullable
-      session: { ...ctx.session },
+      user: ctx.user,
+    },
+  });
+});
+export const authedProcedure = t.procedure.use(async ({ ctx, next }) => {
+  if (!ctx.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  const session = await currentUser();
+  return next({
+    ctx: {
+      // infers the `session` as non-nullable
+      session: session!,
     },
   });
 });
