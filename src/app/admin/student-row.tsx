@@ -1,6 +1,7 @@
 "use client";
 
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
+import { useIsMutating, useQueryClient } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -17,10 +18,26 @@ import { toast } from "sonner";
 
 export function StudentRow({ student }: { student: GetStudentsOutputType }) {
   const utils = api.useUtils();
-  let a = student.isPrinted;
+  const isMutating = useIsMutating();
+
   const { mutate } = api.student.setIsPrinted.useMutation({
-    onSuccess: async () => {
-      await utils.student.getStudents.invalidate();
+    onMutate: async ({ id, printStatus }) => {
+      await utils.student.getStudents.cancel();
+      const prevData = utils.student.getStudents.getData();
+      utils.student.getStudents.setData(undefined, (old) =>
+        old?.map((s) => (s.id === id ? { ...s, isPrinted: !printStatus } : s)),
+      );
+      return { prevData };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.prevData) {
+        utils.student.getStudents.setData(undefined, context.prevData);
+      }
+    },
+    onSettled: async () => {
+      if (isMutating === 1) {
+        await utils.student.getStudents.invalidate();
+      }
     },
   });
 
@@ -96,11 +113,12 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
       <TableCell className="text-center">
         <Button
           className={cn(
-            a && "border border-green-300 bg-green-200 hover:bg-green-500",
-            !a && "border border-red-300 bg-red-200 hover:bg-red-500",
+            student.isPrinted &&
+              "border border-green-300 bg-green-200 hover:bg-green-500",
+            !student.isPrinted &&
+              "border border-red-300 bg-red-200 hover:bg-red-500",
           )}
-          onClick={async () => {
-            a = !a;
+          onClick={() => {
             mutate({
               id: student.id,
               printStatus: student.isPrinted!,

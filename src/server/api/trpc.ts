@@ -25,12 +25,7 @@ import { ZodError } from "zod";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const start = Date.now();
   const user = await auth();
-  const end = Date.now();
-  console.log(
-    `[TRPC | CLERK] Getting clerk auth took took ${end - start}ms to execute`,
-  );
 
   return {
     db,
