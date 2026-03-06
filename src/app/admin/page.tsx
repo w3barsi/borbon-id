@@ -1,6 +1,5 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { Container } from "~/components/container";
-import { Button } from "~/components/ui/button";
 import { api, HydrateClient } from "~/trpc/server";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -15,12 +14,13 @@ const allowedUsers = [
 
 export default async function AdminPage() {
   const user = await currentUser();
-  void api.student.getStudents.prefetch();
   if (!user) return redirect("/");
+
   if (!allowedUsers.includes(user.id)) {
     return <Container>Cannot access page as {user?.id}</Container>;
   }
 
+  void api.student.getStudents.prefetch();
   return (
     <HydrateClient>
       <Header />

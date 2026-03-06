@@ -140,6 +140,7 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
         </Button>
       </TableCell>
       <TableCell>{student.createdAt?.toLocaleString()}</TableCell>
+      <TableCell>{student.updatedAt?.toLocaleString()}</TableCell>
       <TableCell>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

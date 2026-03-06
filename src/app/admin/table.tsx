@@ -25,6 +25,33 @@ export default function DataTable() {
 
   const [filter, setFilter] = useState<FilterType>("new");
 
+  const [orderBy, setOrderBy] = useState<"asc" | "desc" | "">("");
+
+  const handleSort = () => {
+    if (orderBy === "") setOrderBy("asc");
+    else if (orderBy === "asc") setOrderBy("desc");
+    else setOrderBy("");
+  };
+
+  const sortedStudents = (data: typeof students) => {
+    if (!orderBy) return data;
+    return [...data].sort((a, b) => {
+      const dateA = a.updatedAt?.getTime() ?? 0;
+      const dateB = b.updatedAt?.getTime() ?? 0;
+      return orderBy === "asc" ? dateA - dateB : dateB - dateA;
+    });
+  };
+
+  const getFilteredStudents = () => {
+    const data =
+      filter === "new"
+        ? newStudents
+        : filter === "all"
+          ? students
+          : archivedStudents;
+    return sortedStudents(data);
+  };
+
   return (
     <div>
       <Container>
@@ -72,7 +99,7 @@ export default function DataTable() {
           <TableHeader>
             <TableRow>
               <TableHead className="">LRN</TableHead>
-              <TableHead className="group flex cursor-pointer items-center justify-between hover:bg-neutral-200">
+              <TableHead className="group flex items-center justify-between hover:bg-neutral-200">
                 <span>Full Name</span>
               </TableHead>
               <TableHead className="">Grade</TableHead>
@@ -83,25 +110,25 @@ export default function DataTable() {
               <TableHead>Printed</TableHead>
               <TableHead>Archived</TableHead>
               <TableHead>Created At</TableHead>
+              <TableHead>
+                Updated At
+                <button
+                  onClick={handleSort}
+                  className={cn(
+                    "ml-1 inline-block",
+                    orderBy === "" && "text-neutral-400",
+                  )}
+                >
+                  {orderBy === "asc" ? "↑" : orderBy === "desc" ? "↓" : "⇅"}
+                </button>
+              </TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filter === "new"
-              ? newStudents.map((student) => (
-                  <StudentRow key={student.id} student={student} />
-                ))
-              : null}
-            {filter === "all"
-              ? students.map((student) => (
-                  <StudentRow key={student.id} student={student} />
-                ))
-              : null}
-            {filter === "archived"
-              ? archivedStudents.map((student) => (
-                  <StudentRow key={student.id} student={student} />
-                ))
-              : null}
+            {getFilteredStudents().map((student) => (
+              <StudentRow key={student.id} student={student} />
+            ))}
           </TableBody>
         </Table>
       </Container>
