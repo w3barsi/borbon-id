@@ -40,7 +40,7 @@ export function ActionsDropdown({
       );
     });
 
-    await navigator.clipboard.writeText(a.join("\n"));
+    await navigator.clipboard.writeText(a.join("\n").toUpperCase());
     toast.success("Copied all data to clipboard!");
   };
 
@@ -62,7 +62,7 @@ export function ActionsDropdown({
       );
     });
 
-    await navigator.clipboard.writeText(a.join("\n"));
+    await navigator.clipboard.writeText(a.join("\n").toUpperCase());
     toast.success("Copied all data to clipboard!");
   };
 
