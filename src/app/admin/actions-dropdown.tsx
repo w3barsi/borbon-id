@@ -218,6 +218,124 @@ export function ActionsDropdown({
     saveAs(zipfile, "signatures.zip");
   };
 
+  const copyReadyToPrintData = async () => {
+    const a: string[] = [];
+    const filteredStudents =
+      filter === "new"
+        ? students
+            .filter((s) => !s.isArchived)
+            .filter(
+              (s) => !s.isPrinted && s.picture !== null && s.signature !== null,
+            )
+        : students.filter(
+            (s) => !s.isPrinted && s.picture !== null && s.signature !== null,
+          );
+    filteredStudents.forEach((student) => {
+      const grade = (student.grade ?? "").toString().trim();
+      const lrn = (student.lrn ?? "").trim().split(" ").join("");
+      const fullName = (student.fullName ?? "").trim();
+      const emergencyName = (student.emergencyName ?? "").trim();
+      const emergencyAddress = (student.emergencyAddress ?? "").trim();
+      const emergencyNumber = (student.emergencyNumber ?? "").trim();
+      a.push(
+        `GRADE ${grade}\t${lrn}\t${fullName}\t${emergencyName}\t${emergencyAddress}\t${emergencyNumber}`,
+      );
+    });
+
+    await navigator.clipboard.writeText(a.join("\n").toUpperCase());
+    toast.success("Copied all data to clipboard!");
+  };
+
+  const bulkDownloadReadyToPrintPhotos = async () => {
+    console.log("Downloading");
+    const zip = new JSZip();
+
+    const fetchAndAddToZip = async (url: string, fileName: string) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+        const blob = await response.blob();
+        const type = blob.type.split("/");
+        const fn = fileName.replaceAll(".", " ");
+
+        zip.file(`${fn} PIC.${type[1]}`, blob);
+      } catch (error) {
+        console.error(`Error fetching ${url}:`, error);
+      }
+    };
+
+    const filteredStudents =
+      filter === "new"
+        ? students
+            .filter((s) => !s.isArchived)
+            .filter(
+              (s) => !s.isPrinted && s.picture !== null && s.signature !== null,
+            )
+        : students.filter(
+            (s) => !s.isPrinted && s.picture !== null && s.signature !== null,
+          );
+
+    const filePromises = filteredStudents.map(async (s) => {
+      try {
+        if (s.picture === null || s.fullName === null)
+          throw new Error(`Failed to get pics for ${s.fullName}`);
+      } catch (e) {
+        return console.error(e);
+      }
+      return fetchAndAddToZip(s.picture.url!, s.fullName);
+    });
+
+    await Promise.all(filePromises);
+
+    const zipfile = await zip.generateAsync({ type: "blob" });
+    saveAs(zipfile, "pictures.zip");
+  };
+
+  const bulkDownloadReadyToPrintSignatures = async () => {
+    console.log("Downloading");
+    const zip = new JSZip();
+
+    const fetchAndAddToZip = async (url: string, fileName: string) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+        const blob = await response.blob();
+        const type = blob.type.split("/");
+        const fn = fileName.replaceAll(".", " ");
+
+        zip.file(`${fn} SIG.${type[1]}`, blob);
+      } catch (error) {
+        console.error(`Error fetching ${url}:`, error);
+      }
+    };
+
+    const filteredStudents =
+      filter === "new"
+        ? students
+            .filter((s) => !s.isArchived)
+            .filter(
+              (s) => !s.isPrinted && s.picture !== null && s.signature !== null,
+            )
+        : students.filter(
+            (s) => !s.isPrinted && s.picture !== null && s.signature !== null,
+          );
+
+    const filePromises = filteredStudents.map(async (s) => {
+      try {
+        if (s.signature === null || s.fullName === null)
+          throw new Error(`Failed to get pics for ${s.fullName}`);
+      } catch (e) {
+        return console.error(e);
+      }
+      return fetchAndAddToZip(s.signature.url!, s.fullName);
+    });
+
+    await Promise.all(filePromises);
+
+    const zipfile = await zip.generateAsync({ type: "blob" });
+    saveAs(zipfile, "signatures.zip");
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -270,6 +388,35 @@ export function ActionsDropdown({
           <DropdownMenuItem
             onClick={() =>
               toast.promise(bulkDownloadNotPrintedSignatures, {
+                loading: "Preparing to download signatures...",
+                success: "Successfully downloaded signatures!",
+                error: "Failed to download signatures",
+              })
+            }
+          >
+            Download Signatures
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Ready to print</DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={copyReadyToPrintData}>
+            Copy Data
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              toast.promise(bulkDownloadReadyToPrintPhotos, {
+                loading: "Preparing to download photos...",
+                success: "Successfully downloaded photos!",
+                error: "Failed to download signatures",
+              })
+            }
+          >
+            Download Pictures
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              toast.promise(bulkDownloadReadyToPrintSignatures, {
                 loading: "Preparing to download signatures...",
                 success: "Successfully downloaded signatures!",
                 error: "Failed to download signatures",
