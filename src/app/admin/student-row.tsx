@@ -57,7 +57,7 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
     const emergencyNumber = (student.emergencyNumber ?? "").trim();
     const data = `GRADE ${grade}	${lrn}	${fullName}	${emergencyName}	${emergencyAddress}	${emergencyNumber}`;
 
-    await navigator.clipboard.writeText(data);
+    await navigator.clipboard.writeText(data.toUpperCase());
     toast.success("Copied student data to clipboard!");
   };
 
@@ -84,6 +84,15 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
     } else {
       saveAs(blob, `${fileName}_SIG`);
     }
+  };
+
+  const isPhotosComplete = (student: GetStudentsOutputType) => {
+    return (
+      student.picture &&
+      student.signature &&
+      !student.isPrinted &&
+      !student.isArchived
+    );
   };
 
   const isStudentComplete = (student: GetStudentsOutputType) => {
@@ -148,6 +157,8 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
               variant="ghost"
               className={cn(
                 "h-8 w-8 p-0",
+                isPhotosComplete(student) &&
+                  "bg-yellow-400 hover:bg-yellow-500",
                 isStudentComplete(student) && "bg-green-400 hover:bg-green-500",
               )}
             >
