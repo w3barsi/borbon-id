@@ -18,20 +18,19 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import type { GetStudentsOutputType } from "~/server/api/routers/students";
 import { api } from "~/trpc/react";
+import { formatDateTimeToMMDDYY } from "~/utils/date";
 import { Trash } from "lucide-react";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { formatDateTimeToMMDDYY } from "~/utils/date";
 
 type EditStudentDialog = {
   isOpen: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
-  user: {
-    id: number;
-  };
+  student: GetStudentsOutputType;
 };
 const formSchema = z.object({
   fullName: z.string().optional(),
@@ -43,29 +42,11 @@ const formSchema = z.object({
   emergencyAddress: z.string().optional(),
 });
 
-
-
 export default function EditStudentDialog(props: EditStudentDialog) {
   const utils = api.useUtils();
   const [toastId, setToastId] = useState<number | string>();
 
-  const {
-    data: student,
-    mutate: getStudentData,
-    isPending,
-  } = api.student.getStudent.useMutation({
-    onSuccess: (data) => {
-      form.reset({
-        lrn: data?.lrn ?? "",
-        fullName: data?.fullName ?? "",
-        grade: data?.grade ?? 0,
-        section: data?.section ?? "",
-        emergencyName: data?.emergencyName ?? "",
-        emergencyNumber: data?.emergencyNumber ?? "",
-        emergencyAddress: data?.emergencyAddress ?? "",
-      });
-    },
-  });
+  const student = props.student;
 
   const { mutate: editStudent } = api.student.editStudent.useMutation({
     onMutate: () => {
@@ -104,161 +85,167 @@ export default function EditStudentDialog(props: EditStudentDialog) {
       emergencyAddress: "",
     },
   });
+
+  useEffect(() => {
+    form.reset({
+      lrn: student.lrn ?? "",
+      fullName: student.fullName ?? "",
+      grade: student.grade ?? 0,
+      section: student.section ?? "",
+      emergencyName: student.emergencyName ?? "",
+      emergencyNumber: student.emergencyNumber ?? "",
+      emergencyAddress: student.emergencyAddress ?? "",
+    });
+  }, [student, form]);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
-    editStudent({ ...values, id: props.user.id });
+    editStudent({ ...values, id: props.student.id });
     props.setIsOpen(false);
   }
 
   return (
     <Dialog open={props.isOpen} onOpenChange={props.setIsOpen}>
-      <DialogContent
-        onOpenAutoFocus={() => getStudentData({ id: props.user.id })}
-      >
-        {isPending ? (
-          <div>Loading student data...</div>
-        ) : (
-          <>
-            <DialogTitle>Edit Student</DialogTitle>
-            {student ? (
-              <DialogDescription>
-                <p>Created at: <span className="font-bold">{student?.createdAt.toLocaleString()}</span></p>
-                {student?.updatedAt &&
-                  <p>Updated at: <span className="font-bold">{student?.updatedAt.toLocaleString()}</span></p>
-                }
-              </DialogDescription>
-            ) : null}
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
-              >
-                <FormField
-                  control={form.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Full Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lrn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>LRN</FormLabel>
-                      <FormControl>
-                        <Input placeholder="LRN" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      <DialogContent>
+        <DialogTitle>Edit Student</DialogTitle>
+        <DialogDescription>
+          <p>
+            Created at:{" "}
+            <span className="font-bold">
+              {student.createdAt.toLocaleString()}
+            </span>
+          </p>
+          {student.updatedAt && (
+            <p>
+              Updated at:{" "}
+              <span className="font-bold">
+                {student.updatedAt.toLocaleString()}
+              </span>
+            </p>
+          )}
+        </DialogDescription>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Full Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="lrn"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>LRN</FormLabel>
+                  <FormControl>
+                    <Input placeholder="LRN" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <div className="flex space-x-4">
-                  <div className="w-1/2">
-                    <FormField
-                      control={form.control}
-                      name="grade"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Grade</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="Grade"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="w-1/2">
-                    <FormField
-                      control={form.control}
-                      name="section"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Section</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Section" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
+            <div className="flex space-x-4">
+              <div className="w-1/2">
                 <FormField
                   control={form.control}
-                  name="emergencyName"
+                  name="grade"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Emergency Name</FormLabel>
+                      <FormLabel>Grade</FormLabel>
                       <FormControl>
-                        <Input placeholder="Emergency Name" {...field} />
+                        <Input type="number" placeholder="Grade" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+              </div>
+              <div className="w-1/2">
                 <FormField
                   control={form.control}
-                  name="emergencyNumber"
+                  name="section"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Emergency Number</FormLabel>
+                      <FormLabel>Section</FormLabel>
                       <FormControl>
-                        <Input placeholder="Emergency Number" {...field} />
+                        <Input placeholder="Section" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="emergencyAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Emergency Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Emergency Address" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex space-x-2">
-                  <Button type="submit" className="w-full">
-                    Submit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    className="px-2"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      deleteStudent({
-                        id: props.user.id,
-                        sigKey: student?.signature?.key,
-                        picKey: student?.picture?.key,
-                      });
-                    }}
-                  >
-                    <Trash />
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </>
-        )}
+              </div>
+            </div>
+            <FormField
+              control={form.control}
+              name="emergencyName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Emergency Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Emergency Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="emergencyNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Emergency Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Emergency Number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="emergencyAddress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Emergency Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Emergency Address" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex space-x-2">
+              <Button type="submit" className="w-full">
+                Submit
+              </Button>
+              <Button
+                variant="destructive"
+                className="px-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  deleteStudent({
+                    id: props.student.id,
+                    sigKey: props.student.signature?.key,
+                    picKey: props.student.picture?.key,
+                  });
+                }}
+              >
+                <Trash />
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

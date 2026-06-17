@@ -27,105 +27,158 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
+import type { GetStudentsOutputType } from "~/server/api/routers/students";
 import { api } from "~/trpc/react";
 import clsx from "clsx";
-import { Camera, HardDriveUpload, Trash, View } from "lucide-react";
+import { Camera, HardDriveUpload, Info, Trash, View } from "lucide-react";
 import React, { useState } from "react";
 
 import EditStudentDialog from "./edit-dialog";
 import { TakePictureButton, UploadPictureButton } from "./upload-button";
 import useViewPhotoDialogStore from "./view-photo-dialog-store";
 
+function getMissingFields(student: GetStudentsOutputType) {
+  return [
+    !student.fullName && "Full Name",
+    !student.lrn && "LRN",
+    student.grade == null && "Grade",
+    !student.emergencyName && "Emergency Name",
+    !student.emergencyNumber && "Emergency Number",
+    !student.emergencyAddress && "Emergency Address",
+    !student.picture?.url && "Picture",
+    !student.signature?.url && "Signature",
+  ].filter(Boolean) as string[];
+}
+
 export default function DataTable() {
   const [data] = api.student.getStudents.useSuspenseQuery();
-  const [id, setId] = useState<number>(0);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  const selectedStudent = data.find((student) => student.id === selectedId);
+
   const handleNameClick = (id: number) => {
-    setId(id);
+    setSelectedId(id);
     setIsEditDialogOpen(true);
   };
 
   return (
     <div className="flex flex-col">
-      <EditStudentDialog
-        user={{ id }}
-        isOpen={isEditDialogOpen}
-        setIsOpen={setIsEditDialogOpen}
-      />
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-full">Full Name</TableHead>
-            <TableHead className="min-w-32 text-center">Details</TableHead>
-            <TableHead className="min-w-60 text-center">Created on</TableHead>
-            <TableHead className="min-w-20 text-center">Is Printed</TableHead>
-            <TableHead className="min-w-20 text-center">Picture</TableHead>
-            <TableHead className="min-w-20 text-center">Signature</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((student) => (
-            <TableRow key={student.id}>
-              <TableCell>
-                <Button
-                  variant="link"
-                  className="p-0 hover:text-base"
-                  onClick={() => handleNameClick(student.id)}
-                >
-                  {student.fullName}
-                </Button>
-              </TableCell>
-              <TableCell className="text-center">
-                {(() => {
-                  const isMissingDetails =
-                    !student.fullName ||
-                    !student.lrn ||
-                    student.grade == null ||
-                    !student.emergencyName ||
-                    !student.emergencyNumber ||
-                    !student.emergencyAddress ||
-                    !student.picture?.url ||
-                    !student.signature?.url;
-                  return (
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
-                        isMissingDetails
-                          ? "bg-red-100 text-red-700"
-                          : "bg-green-100 text-green-700",
-                      )}
-                    >
-                      {isMissingDetails ? "Incomplete" : "Complete"}
-                    </span>
-                  );
-                })()}
-              </TableCell>
-              <TableCell>
-                <p className="text-center">{student.createdAt.toLocaleString()}</p>
-              </TableCell>
-              <TableCell className="text-center">
-                {student.isPrinted ? "🟩" : "🟥"}
-              </TableCell>
-              <TableCell>
-                <FileDropdown
-                  for="picture"
-                  file={student.picture}
-                  user={{ id: student.id, fullName: student.fullName }}
-                />
-              </TableCell>
-              <TableCell>
-                <FileDropdown
-                  for="signature"
-                  file={student.signature}
-                  user={{ id: student.id, fullName: student.fullName }}
-                />
-              </TableCell>
+      {selectedStudent && (
+        <EditStudentDialog
+          student={selectedStudent}
+          isOpen={isEditDialogOpen}
+          setIsOpen={setIsEditDialogOpen}
+        />
+      )}
+      <TooltipProvider delayDuration={0}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-10 text-center"></TableHead>
+              <TableHead className="w-full">Full Name</TableHead>
+              <TableHead className="min-w-32 text-center">Details</TableHead>
+              <TableHead className="min-w-60 text-center">Created on</TableHead>
+              <TableHead className="min-w-20 text-center">Is Printed</TableHead>
+              <TableHead className="min-w-20 text-center">Picture</TableHead>
+              <TableHead className="min-w-20 text-center">Signature</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {data.map((student) => (
+              <TableRow key={student.id}>
+                <TableCell className="text-center">
+                  {(() => {
+                    const missing = getMissingFields(student);
+                    return (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className={cn(
+                              "inline-flex items-center justify-center rounded-full p-1",
+                              missing.length > 0
+                                ? "text-red-600"
+                                : "text-green-600",
+                            )}
+                          >
+                            <Info className="h-4 w-4" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="flex flex-col gap-1">
+                            {missing.length > 0 ? (
+                              missing.map((field) => (
+                                <span key={field}>Missing: {field}</span>
+                              ))
+                            ) : (
+                              <span>All details complete</span>
+                            )}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })()}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="link"
+                    className="p-0 hover:text-base"
+                    onClick={() => handleNameClick(student.id)}
+                  >
+                    {student.fullName}
+                  </Button>
+                </TableCell>
+                <TableCell className="text-center">
+                  {(() => {
+                    const missing = getMissingFields(student);
+                    return (
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
+                          missing.length > 0
+                            ? "bg-red-100 text-red-700"
+                            : "bg-green-100 text-green-700",
+                        )}
+                      >
+                        {missing.length > 0 ? "Incomplete" : "Complete"}
+                      </span>
+                    );
+                  })()}
+                </TableCell>
+                <TableCell>
+                  <p className="text-center">
+                    {student.createdAt.toLocaleString()}
+                  </p>
+                </TableCell>
+                <TableCell className="text-center">
+                  {student.isPrinted ? "🟩" : "🟥"}
+                </TableCell>
+                <TableCell>
+                  <FileDropdown
+                    for="picture"
+                    file={student.picture}
+                    user={{ id: student.id, fullName: student.fullName }}
+                  />
+                </TableCell>
+                <TableCell>
+                  <FileDropdown
+                    for="signature"
+                    file={student.signature}
+                    user={{ id: student.id, fullName: student.fullName }}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TooltipProvider>
     </div>
   );
 }
