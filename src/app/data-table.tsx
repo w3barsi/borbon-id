@@ -58,6 +58,7 @@ export default function DataTable() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-full">Full Name</TableHead>
+            <TableHead className="min-w-32 text-center">Details</TableHead>
             <TableHead className="min-w-60 text-center">Created on</TableHead>
             <TableHead className="min-w-20 text-center">Is Printed</TableHead>
             <TableHead className="min-w-20 text-center">Picture</TableHead>
@@ -75,6 +76,31 @@ export default function DataTable() {
                 >
                   {student.fullName}
                 </Button>
+              </TableCell>
+              <TableCell className="text-center">
+                {(() => {
+                  const isMissingDetails =
+                    !student.fullName ||
+                    !student.lrn ||
+                    student.grade == null ||
+                    !student.emergencyName ||
+                    !student.emergencyNumber ||
+                    !student.emergencyAddress ||
+                    !student.picture?.url ||
+                    !student.signature?.url;
+                  return (
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
+                        isMissingDetails
+                          ? "bg-red-100 text-red-700"
+                          : "bg-green-100 text-green-700",
+                      )}
+                    >
+                      {isMissingDetails ? "Incomplete" : "Complete"}
+                    </span>
+                  );
+                })()}
               </TableCell>
               <TableCell>
                 <p className="text-center">{student.createdAt.toLocaleString()}</p>
