@@ -128,7 +128,9 @@ const StudentRow = memo(function StudentRow(props: {
           <TooltipContent>
             <div className="flex flex-col gap-1">
               {missing.length > 0 ? (
-                missing.map((field) => <span key={field}>Missing: {field}</span>)
+                missing.map((field) => (
+                  <span key={field}>Missing: {field}</span>
+                ))
               ) : (
                 <span>All details complete</span>
               )}
@@ -139,7 +141,6 @@ const StudentRow = memo(function StudentRow(props: {
       <TableCell>
         <Button
           variant="link"
-          className="p-0 hover:text-base"
           onClick={() => {
             setSelectedStudent(student);
             setIsEditDialogOpen(true);
