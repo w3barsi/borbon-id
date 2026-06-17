@@ -8,6 +8,8 @@ import DataTable from "./data-table";
 import Header from "./header";
 import ViewPhotoDialog from "./view-photo-dialog";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   void api.student.getStudents.prefetch();
 

@@ -33,7 +33,7 @@ export function UploadPictureButton(props: UploadButton) {
   ) => {
     // Check if a file is selected
     const files = event.target.files;
-    if (files && files.length === 1 && files[0] !== null) {
+    if (files?.length === 1 && files[0] !== null) {
       const file = files[0];
       if (file !== undefined) {
         toast.promise(
@@ -42,7 +42,7 @@ export function UploadPictureButton(props: UploadButton) {
             for: props.for,
           }),
           {
-            loading: `Uploading file for ${props.user.fullName ? props.user.fullName : props.user.id}!`,
+            loading: `Uploading file for ${props.user.fullName ?? props.user.id}!`,
             success: `Succesfully uploaded file for ${props.user.fullName}!`,
             error: "Failed to upload file!",
           },
@@ -86,7 +86,7 @@ export function TakePictureButton(props: UploadButton) {
   ) => {
     // Check if a file is selected
     const files = event.target.files;
-    if (files && files.length === 1 && files[0] !== null) {
+    if (files?.length === 1 && files[0] !== null) {
       const file = files[0];
       if (file !== undefined) {
         toast.promise(
@@ -95,7 +95,7 @@ export function TakePictureButton(props: UploadButton) {
             for: props.for,
           }),
           {
-            loading: `Uploading file for ${props.user.fullName ? props.user.fullName : props.user.id}!`,
+            loading: `Uploading file for ${props.user.fullName ?? props.user.id}!`,
             success: `Succesfully uploaded file for ${props.user.fullName}!`,
             error: "Failed to upload file!",
           },

@@ -7,6 +7,8 @@ import React from "react";
 import Header from "../header";
 import DataTable from "./table";
 
+export const dynamic = "force-dynamic";
+
 const allowedUsers = [
   "user_2nKMOf6hWjwXRhvspf1khf0NOSc",
   "user_2nmQLK32pORSbgMDL2Sv5lIvLEv",
