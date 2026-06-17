@@ -1,10 +1,12 @@
 import next from "eslint-config-next";
+import reactCompiler from "eslint-plugin-react-compiler";
 import tseslint from "typescript-eslint";
 import drizzle from "eslint-plugin-drizzle";
 
 /** @type {import('eslint').Linter.Config[]} */
 const config = tseslint.config(
   ...next,
+  reactCompiler.configs.recommended,
   {
     files: ["**/*.ts", "**/*.tsx"],
     extends: [

@@ -9,6 +9,7 @@ const config = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "utfs.io" }],
   },
+  reactCompiler: true,
 };
 
 export default config;
