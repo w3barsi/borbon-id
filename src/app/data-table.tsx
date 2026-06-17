@@ -36,12 +36,11 @@ import {
 import { cn } from "~/lib/utils";
 import type { GetStudentsOutputType } from "~/server/api/routers/students";
 import { api } from "~/trpc/react";
-import clsx from "clsx";
-import { Camera, HardDriveUpload, Info, Trash, View } from "lucide-react";
-import React, { useState } from "react";
+import { Info, Trash, View } from "lucide-react";
+import React, { memo, useState } from "react";
 
 import EditStudentDialog from "./edit-dialog";
-import { TakePictureButton, UploadPictureButton } from "./upload-button";
+import { TakePictureButton } from "./upload-button";
 import useViewPhotoDialogStore from "./view-photo-dialog-store";
 
 function getMissingFields(student: GetStudentsOutputType) {
@@ -59,20 +58,15 @@ function getMissingFields(student: GetStudentsOutputType) {
 
 export default function DataTable() {
   const [data] = api.student.getStudents.useSuspenseQuery();
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedStudent, setSelectedStudent] =
+    useState<GetStudentsOutputType | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  const selectedStudent = data.find((student) => student.id === selectedId);
-
-  const handleNameClick = (id: number) => {
-    setSelectedId(id);
-    setIsEditDialogOpen(true);
-  };
 
   return (
     <div className="flex flex-col">
       {selectedStudent && (
         <EditStudentDialog
+          key={selectedStudent.id}
           student={selectedStudent}
           isOpen={isEditDialogOpen}
           setIsOpen={setIsEditDialogOpen}
@@ -93,88 +87,12 @@ export default function DataTable() {
           </TableHeader>
           <TableBody>
             {data.map((student) => (
-              <TableRow key={student.id}>
-                <TableCell className="text-center">
-                  {(() => {
-                    const missing = getMissingFields(student);
-                    return (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span
-                            className={cn(
-                              "inline-flex items-center justify-center rounded-full p-1",
-                              missing.length > 0
-                                ? "text-red-600"
-                                : "text-green-600",
-                            )}
-                          >
-                            <Info className="h-4 w-4" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <div className="flex flex-col gap-1">
-                            {missing.length > 0 ? (
-                              missing.map((field) => (
-                                <span key={field}>Missing: {field}</span>
-                              ))
-                            ) : (
-                              <span>All details complete</span>
-                            )}
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    );
-                  })()}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="link"
-                    className="p-0 hover:text-base"
-                    onClick={() => handleNameClick(student.id)}
-                  >
-                    {student.fullName}
-                  </Button>
-                </TableCell>
-                <TableCell className="text-center">
-                  {(() => {
-                    const missing = getMissingFields(student);
-                    return (
-                      <span
-                        className={cn(
-                          "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
-                          missing.length > 0
-                            ? "bg-red-100 text-red-700"
-                            : "bg-green-100 text-green-700",
-                        )}
-                      >
-                        {missing.length > 0 ? "Incomplete" : "Complete"}
-                      </span>
-                    );
-                  })()}
-                </TableCell>
-                <TableCell>
-                  <p className="text-center">
-                    {student.createdAt.toLocaleString()}
-                  </p>
-                </TableCell>
-                <TableCell className="text-center">
-                  {student.isPrinted ? "🟩" : "🟥"}
-                </TableCell>
-                <TableCell>
-                  <FileDropdown
-                    for="picture"
-                    file={student.picture}
-                    user={{ id: student.id, fullName: student.fullName }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <FileDropdown
-                    for="signature"
-                    file={student.signature}
-                    user={{ id: student.id, fullName: student.fullName }}
-                  />
-                </TableCell>
-              </TableRow>
+              <StudentRow
+                key={student.id}
+                student={student}
+                setSelectedStudent={setSelectedStudent}
+                setIsEditDialogOpen={setIsEditDialogOpen}
+              />
             ))}
           </TableBody>
         </Table>
@@ -182,6 +100,89 @@ export default function DataTable() {
     </div>
   );
 }
+
+const StudentRow = memo(function StudentRow(props: {
+  student: GetStudentsOutputType;
+  setSelectedStudent: React.Dispatch<
+    React.SetStateAction<GetStudentsOutputType | null>
+  >;
+  setIsEditDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const { student, setSelectedStudent, setIsEditDialogOpen } = props;
+  const missing = getMissingFields(student);
+
+  return (
+    <TableRow>
+      <TableCell className="text-center">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className={cn(
+                "inline-flex items-center justify-center rounded-full p-1",
+                missing.length > 0 ? "text-red-600" : "text-green-600",
+              )}
+            >
+              <Info className="h-4 w-4" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="flex flex-col gap-1">
+              {missing.length > 0 ? (
+                missing.map((field) => <span key={field}>Missing: {field}</span>)
+              ) : (
+                <span>All details complete</span>
+              )}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TableCell>
+      <TableCell>
+        <Button
+          variant="link"
+          className="p-0 hover:text-base"
+          onClick={() => {
+            setSelectedStudent(student);
+            setIsEditDialogOpen(true);
+          }}
+        >
+          {student.fullName}
+        </Button>
+      </TableCell>
+      <TableCell className="text-center">
+        <span
+          className={cn(
+            "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
+            missing.length > 0
+              ? "bg-red-100 text-red-700"
+              : "bg-green-100 text-green-700",
+          )}
+        >
+          {missing.length > 0 ? "Incomplete" : "Complete"}
+        </span>
+      </TableCell>
+      <TableCell>
+        <p className="text-center">{student.createdAt.toLocaleString()}</p>
+      </TableCell>
+      <TableCell className="text-center">
+        {student.isPrinted ? "🟩" : "🟥"}
+      </TableCell>
+      <TableCell>
+        <FileDropdown
+          for="picture"
+          file={student.picture}
+          user={{ id: student.id, fullName: student.fullName }}
+        />
+      </TableCell>
+      <TableCell>
+        <FileDropdown
+          for="signature"
+          file={student.signature}
+          user={{ id: student.id, fullName: student.fullName }}
+        />
+      </TableCell>
+    </TableRow>
+  );
+});
 
 function FileDropdown(props: {
   for: "signature" | "picture";

@@ -22,7 +22,7 @@ import type { GetStudentsOutputType } from "~/server/api/routers/students";
 import { api } from "~/trpc/react";
 import { formatDateTimeToMMDDYY } from "~/utils/date";
 import { Trash } from "lucide-react";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -76,18 +76,6 @@ export default function EditStudentDialog(props: EditStudentDialog) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      lrn: "",
-      fullName: "",
-      grade: 0,
-      section: "",
-      emergencyName: "",
-      emergencyNumber: "",
-      emergencyAddress: "",
-    },
-  });
-
-  useEffect(() => {
-    form.reset({
       lrn: student.lrn ?? "",
       fullName: student.fullName ?? "",
       grade: student.grade ?? 0,
@@ -95,8 +83,8 @@ export default function EditStudentDialog(props: EditStudentDialog) {
       emergencyName: student.emergencyName ?? "",
       emergencyNumber: student.emergencyNumber ?? "",
       emergencyAddress: student.emergencyAddress ?? "",
-    });
-  }, [student, form]);
+    },
+  });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
@@ -109,21 +97,23 @@ export default function EditStudentDialog(props: EditStudentDialog) {
     <Dialog open={props.isOpen} onOpenChange={props.setIsOpen}>
       <DialogContent>
         <DialogTitle>Edit Student</DialogTitle>
-        <DialogDescription>
-          <p>
-            Created at:{" "}
-            <span className="font-bold">
-              {student.createdAt.toLocaleString()}
-            </span>
-          </p>
-          {student.updatedAt && (
-            <p>
-              Updated at:{" "}
+        <DialogDescription asChild>
+          <div className="space-y-1">
+            <div>
+              Created at:{" "}
               <span className="font-bold">
-                {student.updatedAt.toLocaleString()}
+                {student.createdAt.toLocaleString()}
               </span>
-            </p>
-          )}
+            </div>
+            {student.updatedAt && (
+              <div>
+                Updated at:{" "}
+                <span className="font-bold">
+                  {student.updatedAt.toLocaleString()}
+                </span>
+              </div>
+            )}
+          </div>
         </DialogDescription>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
