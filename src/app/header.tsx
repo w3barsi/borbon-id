@@ -1,13 +1,14 @@
 import { ClerkLoaded, ClerkLoading, UserButton } from "@clerk/nextjs";
 import { Container } from "~/components/container";
 
+const userButtonAppearance = {
+  elements: {
+    userButtonAvatarBox: "w-10 h-10", // Custom width and height
+    userButtonOuterIdentifier: "text-xl",
+  },
+};
+
 export default function Header() {
-  const userButtonAppearance = {
-    elements: {
-      userButtonAvatarBox: "w-10 h-10", // Custom width and height
-      userButtonOuterIdentifier: "text-xl",
-    },
-  };
   return (
     <Container>
       <header className="flex h-12 items-center justify-between">

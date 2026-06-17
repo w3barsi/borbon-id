@@ -20,8 +20,6 @@ export type FilterType = "new" | "all" | "archived";
 
 export default function DataTable() {
   const [students] = api.student.getStudents.useSuspenseQuery();
-  const newStudents = students.filter((s) => !s.isArchived);
-  const archivedStudents = students.filter((s) => s.isArchived);
 
   const [filter, setFilter] = useState<FilterType>("new");
 
@@ -33,24 +31,20 @@ export default function DataTable() {
     else setOrderBy("");
   };
 
-  const sortedStudents = (data: typeof students) => {
-    if (!orderBy) return data;
-    return [...data].sort((a, b) => {
-      const dateA = a.updatedAt?.getTime() ?? 0;
-      const dateB = b.updatedAt?.getTime() ?? 0;
-      return orderBy === "asc" ? dateA - dateB : dateB - dateA;
-    });
-  };
+  const baseStudents =
+    filter === "new"
+      ? students.filter((s) => !s.isArchived)
+      : filter === "archived"
+        ? students.filter((s) => s.isArchived)
+        : students;
 
-  const getFilteredStudents = () => {
-    const data =
-      filter === "new"
-        ? newStudents
-        : filter === "all"
-          ? students
-          : archivedStudents;
-    return sortedStudents(data);
-  };
+  const filteredStudents = orderBy
+    ? [...baseStudents].sort((a, b) => {
+        const dateA = a.updatedAt?.getTime() ?? 0;
+        const dateB = b.updatedAt?.getTime() ?? 0;
+        return orderBy === "asc" ? dateA - dateB : dateB - dateA;
+      })
+    : baseStudents;
 
   return (
     <div>
@@ -126,7 +120,7 @@ export default function DataTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {getFilteredStudents().map((student) => (
+            {filteredStudents.map((student) => (
               <StudentRow key={student.id} student={student} />
             ))}
           </TableBody>

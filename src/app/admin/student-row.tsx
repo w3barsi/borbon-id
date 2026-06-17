@@ -1,7 +1,6 @@
 "use client";
 
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
-import { useIsMutating, useQueryClient } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -16,9 +15,70 @@ import { api } from "~/trpc/react";
 import { saveAs } from "file-saver";
 import { toast } from "sonner";
 
+function isPhotosComplete(student: GetStudentsOutputType) {
+  return (
+    student.picture &&
+    student.signature &&
+    !student.isPrinted &&
+    !student.isArchived
+  );
+}
+
+function isStudentComplete(student: GetStudentsOutputType) {
+  return (
+    student.lrn &&
+    student.fullName &&
+    student.grade &&
+    student.section &&
+    student.emergencyName &&
+    student.emergencyAddress &&
+    student.emergencyNumber &&
+    student.picture &&
+    student.signature &&
+    !student.isPrinted
+  );
+}
+
+async function copyStudentData(student: GetStudentsOutputType) {
+  const grade = (student.grade ?? "").toString().trim();
+  const lrn = (student.lrn ?? "").trim();
+  const fullName = (student.fullName ?? "").trim();
+  const emergencyName = (student.emergencyName ?? "").trim();
+  const emergencyAddress = (student.emergencyAddress ?? "").trim();
+  const emergencyNumber = (student.emergencyNumber ?? "").trim();
+  const data = `GRADE ${grade}\t${lrn}\t${fullName}\t${emergencyName}\t${emergencyAddress}\t${emergencyNumber}`;
+
+  await navigator.clipboard.writeText(data.toUpperCase());
+  toast.success("Copied student data to clipboard!");
+}
+
+async function downloadStudentFile(
+  pType: "signature" | "picture",
+  url: string | null | undefined,
+  fullName: string | null | undefined,
+) {
+  if (url == null || url == undefined) {
+    console.log("No pic");
+    return;
+  }
+  if (fullName == null || fullName == undefined) {
+    console.log("No name");
+    return;
+  }
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Network response was not ok");
+
+  const blob = await res.blob();
+  const fileName = fullName.replaceAll(".", " ").replaceAll(" ", " ");
+  if (pType === "picture") {
+    saveAs(blob, `${fileName}_PIC`);
+  } else {
+    saveAs(blob, `${fileName}_SIG`);
+  }
+}
+
 export function StudentRow({ student }: { student: GetStudentsOutputType }) {
   const utils = api.useUtils();
-  const isMutating = useIsMutating();
 
   const { mutate } = api.student.setIsPrinted.useMutation({
     onMutate: async ({ id, printStatus }) => {
@@ -34,10 +94,8 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
         utils.student.getStudents.setData(undefined, context.prevData);
       }
     },
-    onSettled: async () => {
-      if (isMutating === 1) {
-        await utils.student.getStudents.invalidate();
-      }
+    onSuccess: async () => {
+      await utils.student.getStudents.invalidate();
     },
   });
 
@@ -46,69 +104,6 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
       await utils.student.getStudents.invalidate();
     },
   });
-
-  const handleCopy = async (student: GetStudentsOutputType) => {
-    console.log(student);
-    const grade = (student.grade ?? "").toString().trim();
-    const lrn = (student.lrn ?? "").trim();
-    const fullName = (student.fullName ?? "").trim();
-    const emergencyName = (student.emergencyName ?? "").trim();
-    const emergencyAddress = (student.emergencyAddress ?? "").trim();
-    const emergencyNumber = (student.emergencyNumber ?? "").trim();
-    const data = `GRADE ${grade}	${lrn}	${fullName}	${emergencyName}	${emergencyAddress}	${emergencyNumber}`;
-
-    await navigator.clipboard.writeText(data.toUpperCase());
-    toast.success("Copied student data to clipboard!");
-  };
-
-  const download = async (
-    pType: "signature" | "picture",
-    url: string | null | undefined,
-    fullName: string | null | undefined,
-  ) => {
-    if (url == null || url == undefined) {
-      console.log("No pic");
-      return;
-    }
-    if (fullName == null || fullName == undefined) {
-      console.log("No name");
-      return;
-    }
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("Network response was not ok");
-
-    const blob = await res.blob();
-    const fileName = fullName.replaceAll(".", " ").replaceAll(" ", " ");
-    if (pType === "picture") {
-      saveAs(blob, `${fileName}_PIC`);
-    } else {
-      saveAs(blob, `${fileName}_SIG`);
-    }
-  };
-
-  const isPhotosComplete = (student: GetStudentsOutputType) => {
-    return (
-      student.picture &&
-      student.signature &&
-      !student.isPrinted &&
-      !student.isArchived
-    );
-  };
-
-  const isStudentComplete = (student: GetStudentsOutputType) => {
-    return (
-      student.lrn &&
-      student.fullName &&
-      student.grade &&
-      student.section &&
-      student.emergencyName &&
-      student.emergencyAddress &&
-      student.emergencyNumber &&
-      student.picture &&
-      student.signature &&
-      !student.isPrinted
-    );
-  };
 
   return (
     <TableRow key={student.id}>
@@ -169,7 +164,7 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               onClick={() =>
-                download("picture", student.picture?.url, student.fullName)
+                downloadStudentFile("picture", student.picture?.url, student.fullName)
               }
               disabled={student.picture === null}
             >
@@ -177,7 +172,7 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
-                download("signature", student.signature?.url, student.fullName)
+                downloadStudentFile("signature", student.signature?.url, student.fullName)
               }
               disabled={student.signature === null}
             >
@@ -185,7 +180,7 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={async () => {
-                await handleCopy(student);
+                await copyStudentData(student);
               }}
             >
               Copy
