@@ -207,7 +207,7 @@ function FileDropdown(props: {
 
   const { setIsViewPhotoDialogOpen, setUrl } = useViewPhotoDialogStore();
   const file = props.file;
-  const uploadedFile = file?.url ? file : null;
+  const uploadedFile = file?.url ? { ...file, url: file.url } : null;
   const [isOpen, setIsOpen] = useState(false);
 
   return (
