@@ -207,6 +207,7 @@ function FileDropdown(props: {
 
   const { setIsViewPhotoDialogOpen, setUrl } = useViewPhotoDialogStore();
   const file = props.file;
+  const uploadedFile = file?.url ? file : null;
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -216,10 +217,10 @@ function FileDropdown(props: {
           <Button
             variant="link"
             className={cn("w-full bg-red-100 p-0", {
-              "bg-green-100": file?.url,
+              "bg-green-100": uploadedFile,
             })}
           >
-            {file?.url ? "Yes" : "No"}
+            {uploadedFile ? "Yes" : "No"}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -234,12 +235,12 @@ function FileDropdown(props: {
                 setIsOpen={setIsOpen}
               />
             </DropdownMenuItem>
-            {file?.url ? (
+            {uploadedFile ? (
               <>
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => {
-                    setUrl(props.file?.url ?? "");
+                    setUrl(uploadedFile.url);
                     setIsViewPhotoDialogOpen(true);
                   }}
                 >
@@ -262,25 +263,27 @@ function FileDropdown(props: {
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          Are you sure you want to delete photo?
-        </AlertDialogHeader>
-        <AlertDialogDescription>
-          This action cannot be undone. This will permanently delete the photo.
-        </AlertDialogDescription>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-red-500 hover:bg-red-700"
-            onClick={() => {
-              deletePhoto({ key: file!.key, for: props.for });
-            }}
-          >
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+      {uploadedFile ? (
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            Are you sure you want to delete photo?
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete the photo.
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500 hover:bg-red-700"
+              onClick={() => {
+                deletePhoto({ key: uploadedFile.key, for: props.for });
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      ) : null}
     </AlertDialog>
   );
 }
