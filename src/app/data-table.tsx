@@ -11,6 +11,7 @@ import {
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,11 +37,12 @@ import {
 import { cn } from "~/lib/utils";
 import type { GetStudentsOutputType } from "~/server/api/routers/students";
 import { api } from "~/trpc/react";
-import { Info, Trash, View } from "lucide-react";
-import React, { memo, useState } from "react";
+import { useUploadThing } from "~/utils/uploadthing";
+import { Camera, Info, Trash, View } from "lucide-react";
+import React, { memo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import EditStudentDialog from "./edit-dialog";
-import { TakePictureButton } from "./upload-button";
 import useViewPhotoDialogStore from "./view-photo-dialog-store";
 
 function getMissingFields(student: GetStudentsOutputType) {
@@ -199,9 +201,18 @@ function FileDropdown(props: {
   } | null;
 }) {
   const utils = api.useUtils();
+  const inputRef = useRef<HTMLInputElement>(null);
   const { mutate: deletePhoto } = api.student.deleteUpload.useMutation({
     onSuccess: async () => {
       await utils.student.getStudents.invalidate();
+    },
+  });
+  const { startUpload } = useUploadThing("imageUploader", {
+    onClientUploadComplete: async () => {
+      await utils.student.getStudents.invalidate();
+    },
+    onUploadBegin: () => {
+      setIsOpen(false);
     },
   });
 
@@ -209,9 +220,48 @@ function FileDropdown(props: {
   const file = props.file;
   const uploadedFile = file?.url ? { ...file, url: file.url } : null;
   const [isOpen, setIsOpen] = useState(false);
+  const uploadLabel = props.for === "picture" ? "Capture Picture" : "Capture Signature";
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const selectedFile = event.target.files?.[0];
+
+    if (!selectedFile) return;
+
+    event.target.value = "";
+
+    const uploadPromise = startUpload([selectedFile], {
+      id: props.user.id,
+      for: props.for,
+    }).then((result) => {
+      if (!result) {
+        throw new Error("Upload did not start");
+      }
+
+      return result;
+    });
+
+    toast.promise(
+      uploadPromise,
+      {
+        loading: `Uploading file for ${props.user.fullName ?? props.user.id}!`,
+        success: `Succesfully uploaded file for ${props.user.fullName ?? props.user.id}!`,
+        error: "Failed to upload file!",
+      },
+    );
+  };
 
   return (
     <AlertDialog>
+      <Input
+        ref={inputRef}
+        type="file"
+        capture="environment"
+        className="hidden"
+        accept="image/*"
+        onChange={handleFileChange}
+      />
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button
@@ -227,13 +277,14 @@ function FileDropdown(props: {
           <DropdownMenuGroup>
             <DropdownMenuItem
               className="cursor-pointer"
-              onSelect={(e) => e.preventDefault()}
+              onSelect={(e) => {
+                e.preventDefault();
+                setIsOpen(false);
+                inputRef.current?.click();
+              }}
             >
-              <TakePictureButton
-                for={props.for}
-                user={{ id: props.user.id, fullName: props.user.fullName }}
-                setIsOpen={setIsOpen}
-              />
+              <Camera />
+              {uploadLabel}
             </DropdownMenuItem>
             {uploadedFile ? (
               <>

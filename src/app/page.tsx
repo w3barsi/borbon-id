@@ -1,6 +1,4 @@
-import { UserButton } from "@clerk/nextjs";
 import { Container } from "~/components/container";
-import { Input } from "~/components/ui/input";
 import { api, HydrateClient } from "~/trpc/server";
 
 import CreateStudentDialog from "./create-dialog";

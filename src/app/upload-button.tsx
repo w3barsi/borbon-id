@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { api } from "~/trpc/react";
 import { useUploadThing } from "~/utils/uploadthing";
 import { Camera, HardDriveUpload } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
+import { useRef } from "react";
 import { toast } from "sonner";
 
 type UploadButton = {
@@ -19,6 +19,7 @@ type UploadButton = {
 
 export function UploadPictureButton(props: UploadButton) {
   const utils = api.useUtils();
+  const inputRef = useRef<HTMLInputElement>(null);
   const { startUpload } = useUploadThing("imageUploader", {
     onClientUploadComplete: async () => {
       await utils.student.invalidate();
@@ -47,31 +48,34 @@ export function UploadPictureButton(props: UploadButton) {
             error: "Failed to upload file!",
           },
         );
+        event.target.value = "";
       }
     }
   };
   //
   return (
-    <label
-      htmlFor={`${props.user.id}_${props.for}`}
+    <button
+      type="button"
+      onClick={() => inputRef.current?.click()}
       className="flex cursor-pointer items-center gap-2 text-sm *:cursor-pointer [&>svg]:size-4 [&>svg]:shrink-0"
     >
       <HardDriveUpload />
       {props.for === "picture" ? "Upload Picture" : "Upload Signature"}
       <Input
+        ref={inputRef}
         type="file"
         className="hidden"
         accept="image/*"
         capture={false}
-        id={`${props.user.id}_${props.for}`}
         onChange={handleFileChange}
       />
-    </label>
+    </button>
   );
 }
 
 export function TakePictureButton(props: UploadButton) {
   const utils = api.useUtils();
+  const inputRef = useRef<HTMLInputElement>(null);
   const { startUpload } = useUploadThing("imageUploader", {
     onClientUploadComplete: async () => {
       await utils.student.invalidate();
@@ -100,25 +104,27 @@ export function TakePictureButton(props: UploadButton) {
             error: "Failed to upload file!",
           },
         );
+        event.target.value = "";
       }
     }
   };
   //
   return (
-    <label
-      htmlFor={`${props.user.id}_${props.for}`}
+    <button
+      type="button"
+      onClick={() => inputRef.current?.click()}
       className="flex cursor-pointer items-center gap-2 text-sm *:cursor-pointer [&>svg]:size-4 [&>svg]:shrink-0"
     >
       <Camera />
       {props.for === "picture" ? "Capture Picture" : "Capture Signature"}
       <Input
+        ref={inputRef}
         type="file"
         capture="environment"
         className="hidden"
-        id={`${props.user.id}_${props.for}`}
         accept="image/*"
         onChange={handleFileChange}
       />
-    </label>
+    </button>
   );
 }
