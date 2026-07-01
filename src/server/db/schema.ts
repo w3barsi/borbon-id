@@ -56,6 +56,10 @@ export const pictures = createTable("pictures", {
   name: text("name", { length: 256 }),
   type: text("type", { length: 256 }),
   url: text("url"),
+  createdAt: int("created_at", { mode: "timestamp" }),
+  updatedAt: int("updated_at", { mode: "timestamp" }).$onUpdate(
+    () => new Date(),
+  ),
 });
 
 export const picturesRelation = relations(pictures, ({ one }) => ({
@@ -74,6 +78,10 @@ export const signatures = createTable("signatures", {
   name: text("name", { length: 256 }),
   type: text("type", { length: 256 }),
   url: text("url"),
+  createdAt: int("created_at", { mode: "timestamp" }),
+  updatedAt: int("updated_at", { mode: "timestamp" }).$onUpdate(
+    () => new Date(),
+  ),
 });
 
 export const signaturesRelation = relations(signatures, ({ one }) => ({

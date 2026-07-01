@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "~/server/db";
-import { pictures, signatures } from "~/server/db/schema";
+import { pictures, signatures, students } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
@@ -27,6 +27,7 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       const input = metadata.input;
+      const uploadedAt = new Date();
 
       if (input.for === "picture") {
         await db.delete(pictures).where(eq(pictures.studentId, input.id));
@@ -36,6 +37,7 @@ export const ourFileRouter = {
           url: file.url,
           name: file.name,
           studentId: input.id,
+          createdAt: uploadedAt,
         });
       } else if (input.for === "signature") {
         await db.delete(signatures).where(eq(signatures.studentId, input.id));
@@ -45,8 +47,14 @@ export const ourFileRouter = {
           url: file.url,
           name: file.name,
           studentId: input.id,
+          createdAt: uploadedAt,
         });
       }
+
+      await db
+        .update(students)
+        .set({ updatedAt: uploadedAt })
+        .where(eq(students.id, input.id));
 
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
       return { uploadedBy: metadata.userId };

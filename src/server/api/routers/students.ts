@@ -96,13 +96,28 @@ export const studentRouter = createTRPCRouter({
   deleteUpload: protectedProcedure
     .input(z.object({ key: z.string(), for: z.enum(["picture", "signature"]) }))
     .mutation(async ({ ctx, input }) => {
+      const file =
+        input.for === "picture"
+          ? await ctx.db.query.pictures.findFirst({
+              where: (pictures, { eq }) => eq(pictures.key, input.key),
+            })
+          : await ctx.db.query.signatures.findFirst({
+              where: (signatures, { eq }) => eq(signatures.key, input.key),
+            });
+
       await utapi.deleteFiles(input.key);
+
       if (input.for === "picture") {
-        return await ctx.db.delete(pictures).where(eq(pictures.key, input.key));
+        await ctx.db.delete(pictures).where(eq(pictures.key, input.key));
       } else {
-        return await ctx.db
-          .delete(signatures)
-          .where(eq(signatures.key, input.key));
+        await ctx.db.delete(signatures).where(eq(signatures.key, input.key));
+      }
+
+      if (file?.studentId) {
+        await ctx.db
+          .update(students)
+          .set({ updatedAt: new Date() })
+          .where(eq(students.id, file.studentId));
       }
     }),
   deleteStudent: protectedProcedure

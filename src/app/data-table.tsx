@@ -198,6 +198,7 @@ function FileDropdown(props: {
     key: string;
     type: string | null;
     url: string | null;
+    createdAt: Date | null;
   } | null;
 }) {
   const utils = api.useUtils();
@@ -221,6 +222,21 @@ function FileDropdown(props: {
   const uploadedFile = file?.url ? { ...file, url: file.url } : null;
   const [isOpen, setIsOpen] = useState(false);
   const uploadLabel = props.for === "picture" ? "Capture Picture" : "Capture Signature";
+  const uploadedAtLabel = uploadedFile?.createdAt
+    ? `Uploaded: ${uploadedFile.createdAt.toLocaleString()}`
+    : uploadedFile
+      ? "Uploaded: unknown"
+      : "No file uploaded";
+  const triggerButton = (
+    <Button
+      variant="link"
+      className={cn("w-full bg-red-100 p-0", {
+        "bg-green-100": uploadedFile,
+      })}
+    >
+      {uploadedFile ? "Yes" : "No"}
+    </Button>
+  );
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -263,16 +279,16 @@ function FileDropdown(props: {
         onChange={handleFileChange}
       />
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="link"
-            className={cn("w-full bg-red-100 p-0", {
-              "bg-green-100": uploadedFile,
-            })}
-          >
-            {uploadedFile ? "Yes" : "No"}
-          </Button>
-        </DropdownMenuTrigger>
+        {uploadedFile ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>{uploadedAtLabel}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
+        )}
         <DropdownMenuContent>
           <DropdownMenuGroup>
             <DropdownMenuItem
@@ -327,7 +343,22 @@ function FileDropdown(props: {
             <AlertDialogAction
               className="bg-red-500 hover:bg-red-700"
               onClick={() => {
-                deletePhoto({ key: uploadedFile.key, for: props.for });
+                toast.promise(
+                  new Promise<void>((resolve, reject) => {
+                    deletePhoto(
+                      { key: uploadedFile.key, for: props.for },
+                      {
+                        onSuccess: () => resolve(),
+                        onError: reject,
+                      },
+                    );
+                  }),
+                  {
+                    loading: "Deleting photo...",
+                    success: "Photo deleted.",
+                    error: "Failed to delete photo.",
+                  },
+                );
               }}
             >
               Delete
