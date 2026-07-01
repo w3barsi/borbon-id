@@ -5,6 +5,7 @@ import {
   protectedProcedure,
 } from "~/server/api/trpc";
 import { pictures, signatures, students } from "~/server/db/schema";
+import { publishStudentsChanged } from "~/server/realtime";
 import { utapi } from "~/server/uploadthing";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -17,6 +18,7 @@ export const studentRouter = createTRPCRouter({
         .update(students)
         .set({ isArchived: !input.archive })
         .where(eq(students.id, input.id));
+      await publishStudentsChanged();
     }),
   setIsPrinted: protectedProcedure
     .input(z.object({ id: z.number(), printStatus: z.boolean() }))
@@ -25,6 +27,7 @@ export const studentRouter = createTRPCRouter({
         .update(students)
         .set({ isPrinted: !input.printStatus })
         .where(eq(students.id, input.id));
+      await publishStudentsChanged();
     }),
   getStudents: protectedProcedure.query(async ({ ctx }) => {
     const data = ctx.db.query.students.findMany({
@@ -73,6 +76,7 @@ export const studentRouter = createTRPCRouter({
         createdById: ctx.session.id,
         createdByName: `${ctx.session.firstName}${ctx.session.lastName ? " " + ctx.session.lastName : ""}`,
       });
+      await publishStudentsChanged();
     }),
   editStudent: protectedProcedure
     .input(
@@ -88,10 +92,12 @@ export const studentRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db
+      const result = await ctx.db
         .update(students)
         .set({ ...input })
         .where(eq(students.id, input.id));
+      await publishStudentsChanged();
+      return result;
     }),
   deleteUpload: protectedProcedure
     .input(z.object({ key: z.string(), for: z.enum(["picture", "signature"]) }))
@@ -119,6 +125,7 @@ export const studentRouter = createTRPCRouter({
           .set({ updatedAt: new Date() })
           .where(eq(students.id, file.studentId));
       }
+      await publishStudentsChanged();
     }),
   deleteStudent: protectedProcedure
     .input(
@@ -139,7 +146,9 @@ export const studentRouter = createTRPCRouter({
       await ctx.db.delete(pictures).where(eq(pictures.studentId, input.id));
       await ctx.db.delete(signatures).where(eq(signatures.studentId, input.id));
 
-      return await ctx.db.delete(students).where(eq(students.id, input.id));
+      const result = await ctx.db.delete(students).where(eq(students.id, input.id));
+      await publishStudentsChanged();
+      return result;
     }),
 });
 

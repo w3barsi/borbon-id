@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "~/server/db";
 import { pictures, signatures, students } from "~/server/db/schema";
+import { publishStudentsChanged } from "~/server/realtime";
 import { eq } from "drizzle-orm";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
@@ -55,6 +56,7 @@ export const ourFileRouter = {
         .update(students)
         .set({ updatedAt: uploadedAt })
         .where(eq(students.id, input.id));
+      await publishStudentsChanged();
 
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
       return { uploadedBy: metadata.userId };

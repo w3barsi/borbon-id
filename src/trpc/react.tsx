@@ -4,7 +4,8 @@ import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { httpBatchStreamLink, loggerLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
-import { useState } from "react";
+import Pusher from "pusher-js";
+import { useEffect, useState } from "react";
 import SuperJSON from "superjson";
 
 import { type AppRouter } from "~/server/api/root";
@@ -63,10 +64,34 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <api.Provider client={trpcClient} queryClient={queryClient}>
+        <StudentsRealtimeInvalidation />
         {props.children}
       </api.Provider>
     </QueryClientProvider>
   );
+}
+
+function StudentsRealtimeInvalidation() {
+  const utils = api.useUtils();
+
+  useEffect(() => {
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    });
+    const channel = pusher.subscribe("students");
+
+    channel.bind("changed", () => {
+      void utils.student.getStudents.invalidate();
+    });
+
+    return () => {
+      channel.unbind("changed");
+      pusher.unsubscribe("students");
+      pusher.disconnect();
+    };
+  }, [utils]);
+
+  return null;
 }
 
 function getBaseUrl() {
