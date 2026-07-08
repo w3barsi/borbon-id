@@ -1,6 +1,7 @@
 "use client";
 
 import { Container } from "~/components/container";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
   Table,
@@ -9,6 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { useState } from "react";
@@ -45,6 +52,23 @@ export default function DataTable() {
         return orderBy === "asc" ? dateA - dateB : dateB - dateA;
       })
     : baseStudents;
+
+  const studentsWithCompleteInfoCount = filteredStudents.filter(
+    (student) =>
+      student.lrn &&
+      student.fullName &&
+      student.grade &&
+      student.section &&
+      student.emergencyName &&
+      student.emergencyNumber &&
+      student.emergencyAddress &&
+      student.picture &&
+      student.signature,
+  ).length;
+
+  const studentsWithCompletePhotosCount = filteredStudents.filter(
+    (student) => student.picture && student.signature,
+  ).length;
 
   return (
     <div>
@@ -85,7 +109,31 @@ export default function DataTable() {
               Archive
             </Button>
           </div>
-          <ActionsDropdown students={students} filter={filter} />
+          <div className="flex items-center gap-2">
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge className="cursor-default bg-green-400 text-black hover:bg-green-500">
+                    {studentsWithCompleteInfoCount}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Students with complete details, photo, and signature
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge className="cursor-default bg-yellow-400 text-black hover:bg-yellow-500">
+                    {studentsWithCompletePhotosCount}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Students with both photo and signature
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <ActionsDropdown students={students} filter={filter} />
+          </div>
         </div>
       </Container>
       <Container>
