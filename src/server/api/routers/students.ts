@@ -12,7 +12,7 @@ import {
 } from "~/server/db/schema";
 import { publishStudentsChanged } from "~/server/realtime";
 import { utapi } from "~/server/uploadthing";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 export const studentRouter = createTRPCRouter({
@@ -32,6 +32,20 @@ export const studentRouter = createTRPCRouter({
         .update(students)
         .set({ status: input.status })
         .where(eq(students.id, input.id));
+      await publishStudentsChanged();
+    }),
+  setStatuses: protectedProcedure
+    .input(
+      z.object({
+        ids: z.array(z.number()).min(1),
+        status: z.enum(studentStatuses),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(students)
+        .set({ status: input.status })
+        .where(inArray(students.id, input.ids));
       await publishStudentsChanged();
     }),
   getStudents: protectedProcedure.query(async ({ ctx }) => {
@@ -151,7 +165,9 @@ export const studentRouter = createTRPCRouter({
       await ctx.db.delete(pictures).where(eq(pictures.studentId, input.id));
       await ctx.db.delete(signatures).where(eq(signatures.studentId, input.id));
 
-      const result = await ctx.db.delete(students).where(eq(students.id, input.id));
+      const result = await ctx.db
+        .delete(students)
+        .where(eq(students.id, input.id));
       await publishStudentsChanged();
       return result;
     }),
