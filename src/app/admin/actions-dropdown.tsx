@@ -56,7 +56,9 @@ async function copyStudentsToClipboard(
     .toUpperCase();
 
   await navigator.clipboard.writeText(text);
-  toast.success("Copied all data to clipboard!");
+  toast.success(
+    `Copied ${students.length} ${students.length === 1 ? "row" : "rows"} to clipboard!`,
+  );
 }
 
 async function fetchAndAddToZip(
@@ -125,12 +127,26 @@ export function ActionsDropdown({
     (s) =>
       !s.isPrinted && s.picture !== null && s.signature !== null,
   );
+  const completeStudents = baseStudents.filter(
+    (s) =>
+      s.lrn &&
+      s.fullName &&
+      s.grade &&
+      s.section &&
+      s.emergencyName &&
+      s.emergencyNumber &&
+      s.emergencyAddress &&
+      s.picture &&
+      s.signature,
+  );
 
   const handleCopyAllData = () => copyStudentsToClipboard(baseStudents, false);
   const handleCopyAllNotPrintedData = () =>
     copyStudentsToClipboard(notPrintedStudents, true);
   const handleCopyReadyToPrintData = () =>
     copyStudentsToClipboard(readyToPrintStudents, true);
+  const handleCopyCompleteStudentsData = () =>
+    copyStudentsToClipboard(completeStudents, true);
 
   const handleDownloadPhotos = () =>
     downloadFilesAsZip(getPhotoFiles(baseStudents), "pictures.zip", "PIC");
@@ -143,6 +159,12 @@ export function ActionsDropdown({
   const handleDownloadReadyToPrintPhotos = () =>
     downloadFilesAsZip(
       getPhotoFiles(readyToPrintStudents),
+      "pictures.zip",
+      "PIC",
+    );
+  const handleDownloadCompleteStudentsPhotos = () =>
+    downloadFilesAsZip(
+      getPhotoFiles(completeStudents),
       "pictures.zip",
       "PIC",
     );
@@ -162,6 +184,12 @@ export function ActionsDropdown({
   const handleDownloadReadyToPrintSignatures = () =>
     downloadFilesAsZip(
       getSignatureFiles(readyToPrintStudents),
+      "signatures.zip",
+      "SIG",
+    );
+  const handleDownloadCompleteStudentsSignatures = () =>
+    downloadFilesAsZip(
+      getSignatureFiles(completeStudents),
       "signatures.zip",
       "SIG",
     );
@@ -249,6 +277,35 @@ export function ActionsDropdown({
           <DropdownMenuItem
             onClick={() =>
               toast.promise(handleDownloadReadyToPrintSignatures, {
+                loading: "Preparing to download signatures...",
+                success: "Successfully downloaded signatures!",
+                error: "Failed to download signatures",
+              })
+            }
+          >
+            Download Signatures
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Complete Students</DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={handleCopyCompleteStudentsData}>
+            Copy Data
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              toast.promise(handleDownloadCompleteStudentsPhotos, {
+                loading: "Preparing to download photos...",
+                success: "Successfully downloaded photos!",
+                error: "Failed to download photos",
+              })
+            }
+          >
+            Download Pictures
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              toast.promise(handleDownloadCompleteStudentsSignatures, {
                 loading: "Preparing to download signatures...",
                 success: "Successfully downloaded signatures!",
                 error: "Failed to download signatures",
