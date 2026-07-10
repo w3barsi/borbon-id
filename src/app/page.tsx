@@ -14,12 +14,15 @@ export default async function Home() {
   return (
     <HydrateClient>
       <Header />
-      <Container className="md:flex md:justify-end">
-        <CreateStudentDialog />
-        <ViewPhotoDialog />
-      </Container>
       <Container>
-        <DataTable />
+        <DataTable
+          actions={
+            <>
+              <CreateStudentDialog />
+              <ViewPhotoDialog />
+            </>
+          }
+        />
       </Container>
     </HydrateClient>
   );
