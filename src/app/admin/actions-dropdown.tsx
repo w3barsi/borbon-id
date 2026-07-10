@@ -6,7 +6,9 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuPortal,
+  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -136,6 +138,12 @@ export function ActionsDropdown({
       s.picture &&
       s.signature,
   );
+  const completeNotPrintedStudents = completeStudents.filter(
+    (student) => student.status === "not_printed",
+  );
+  const completeEncodedStudents = completeStudents.filter(
+    (student) => student.status === "encoded",
+  );
   const completeStudentIds = completeStudents.map((student) => student.id);
   const encodedStudentIds = baseStudents
     .filter((student) => student.status === "encoded")
@@ -157,6 +165,10 @@ export function ActionsDropdown({
     copyStudentsToClipboard(notPrintedStudents, true);
   const handleCopyReadyToPrintData = () =>
     copyStudentsToClipboard(readyToPrintStudents, true);
+  const handleCopyCompleteNotPrintedData = () =>
+    copyStudentsToClipboard(completeNotPrintedStudents, true);
+  const handleCopyCompleteEncodedData = () =>
+    copyStudentsToClipboard(completeEncodedStudents, true);
   const handleCopyCompleteStudentsData = () =>
     copyStudentsToClipboard(completeStudents, true);
 
@@ -316,10 +328,31 @@ export function ActionsDropdown({
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
                 <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={handleCopyCompleteStudentsData}>
-                    Copy data
+                  <DropdownMenuLabel>Copy</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    disabled={completeNotPrintedStudents.length === 0}
+                    onClick={handleCopyCompleteNotPrintedData}
+                  >
+                    Copy not printed
                   </DropdownMenuItem>
                   <DropdownMenuItem
+                    disabled={completeEncodedStudents.length === 0}
+                    onClick={handleCopyCompleteEncodedData}
+                  >
+                    Copy encoded
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={completeStudents.length === 0}
+                    onClick={handleCopyCompleteStudentsData}
+                  >
+                    Copy all complete
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Downloads</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    disabled={completeStudents.length === 0}
                     onClick={() =>
                       toast.promise(handleDownloadCompleteStudentsPhotos, {
                         loading: "Preparing to download photos...",
@@ -331,6 +364,7 @@ export function ActionsDropdown({
                     Download Pictures
                   </DropdownMenuItem>
                   <DropdownMenuItem
+                    disabled={completeStudents.length === 0}
                     onClick={() =>
                       toast.promise(handleDownloadCompleteStudentsSignatures, {
                         loading: "Preparing to download signatures...",
@@ -341,51 +375,49 @@ export function ActionsDropdown({
                   >
                     Download Signatures
                   </DropdownMenuItem>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger
-                      disabled={
-                        completeStudentIds.length === 0 || isSettingBulkStatus
-                      }
-                    >
-                      Mark as
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              setBulkStatus({
-                                ids: completeStudentIds,
-                                status: "not_printed",
-                              })
-                            }
-                          >
-                            Not Printed
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              setBulkStatus({
-                                ids: completeStudentIds,
-                                status: "printed",
-                              })
-                            }
-                          >
-                            Printed
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              setBulkStatus({
-                                ids: completeStudentIds,
-                                status: "encoded",
-                              })
-                            }
-                          >
-                            Encoded
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Mark as</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    disabled={
+                      completeStudentIds.length === 0 || isSettingBulkStatus
+                    }
+                    onClick={() =>
+                      setBulkStatus({
+                        ids: completeStudentIds,
+                        status: "not_printed",
+                      })
+                    }
+                  >
+                    Not Printed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={
+                      completeStudentIds.length === 0 || isSettingBulkStatus
+                    }
+                    onClick={() =>
+                      setBulkStatus({
+                        ids: completeStudentIds,
+                        status: "printed",
+                      })
+                    }
+                  >
+                    Printed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={
+                      completeStudentIds.length === 0 || isSettingBulkStatus
+                    }
+                    onClick={() =>
+                      setBulkStatus({
+                        ids: completeStudentIds,
+                        status: "encoded",
+                      })
+                    }
+                  >
+                    Encoded
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
