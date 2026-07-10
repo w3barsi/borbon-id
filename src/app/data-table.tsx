@@ -82,7 +82,7 @@ export default function DataTable() {
               <TableHead className="w-full">Full Name</TableHead>
               <TableHead className="min-w-32 text-center">Details</TableHead>
               <TableHead className="min-w-60 text-center">Created on</TableHead>
-              <TableHead className="min-w-20 text-center">Is Printed</TableHead>
+              <TableHead className="min-w-24 text-center">Status</TableHead>
               <TableHead className="min-w-20 text-center">Picture</TableHead>
               <TableHead className="min-w-20 text-center">Signature</TableHead>
             </TableRow>
@@ -167,7 +167,16 @@ const StudentRow = memo(function StudentRow(props: {
         <p className="text-center">{student.createdAt.toLocaleString()}</p>
       </TableCell>
       <TableCell className="text-center">
-        {student.isPrinted ? "🟩" : "🟥"}
+        <span
+          className={cn(
+            "inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize",
+            student.status === "printed" && "bg-green-100 text-green-700",
+            student.status === "encoded" && "bg-blue-100 text-blue-700",
+            student.status === "not_printed" && "bg-red-100 text-red-700",
+          )}
+        >
+          {student.status.replace("_", " ")}
+        </span>
       </TableCell>
       <TableCell>
         <FileDropdown

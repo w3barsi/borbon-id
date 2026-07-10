@@ -122,10 +122,14 @@ export function ActionsDropdown({
   filter: FilterType;
 }) {
   const baseStudents = getBaseStudents(students, filter);
-  const notPrintedStudents = baseStudents.filter((s) => !s.isPrinted);
+  const notPrintedStudents = baseStudents.filter(
+    (s) => s.status === "not_printed",
+  );
   const readyToPrintStudents = baseStudents.filter(
     (s) =>
-      !s.isPrinted && s.picture !== null && s.signature !== null,
+      s.status === "not_printed" &&
+      s.picture !== null &&
+      s.signature !== null,
   );
   const completeStudents = baseStudents.filter(
     (s) =>

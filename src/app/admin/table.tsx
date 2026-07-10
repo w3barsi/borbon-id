@@ -149,7 +149,7 @@ export default function DataTable() {
               <TableHead className="">Emergency Name</TableHead>
               <TableHead className="">Emergency Number</TableHead>
               <TableHead className="">Emergency Address</TableHead>
-              <TableHead>Printed</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Archived</TableHead>
               <TableHead>Created At</TableHead>
               <TableHead>

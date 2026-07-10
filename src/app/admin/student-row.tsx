@@ -19,7 +19,7 @@ function isPhotosComplete(student: GetStudentsOutputType) {
   return (
     student.picture &&
     student.signature &&
-    !student.isPrinted &&
+    student.status === "not_printed" &&
     !student.isArchived
   );
 }
@@ -35,7 +35,7 @@ function isStudentComplete(student: GetStudentsOutputType) {
     student.emergencyNumber &&
     student.picture &&
     student.signature &&
-    !student.isPrinted
+    student.status === "not_printed"
   );
 }
 
@@ -80,12 +80,12 @@ async function downloadStudentFile(
 export function StudentRow({ student }: { student: GetStudentsOutputType }) {
   const utils = api.useUtils();
 
-  const { mutate } = api.student.setIsPrinted.useMutation({
-    onMutate: async ({ id, printStatus }) => {
+  const { mutate } = api.student.setStatus.useMutation({
+    onMutate: async ({ id, status }) => {
       await utils.student.getStudents.cancel();
       const prevData = utils.student.getStudents.getData();
       utils.student.getStudents.setData(undefined, (old) =>
-        old?.map((s) => (s.id === id ? { ...s, isPrinted: !printStatus } : s)),
+        old?.map((s) => (s.id === id ? { ...s, status } : s)),
       );
       return { prevData };
     },
@@ -116,19 +116,30 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
       <TableCell>{student.emergencyAddress}</TableCell>
       <TableCell className="text-center">
         <Button
+          variant="secondary"
           className={cn(
-            student.isPrinted &&
+            "w-24",
+            student.status === "printed" &&
               "border border-green-300 bg-green-200 hover:bg-green-500",
-            !student.isPrinted &&
+            student.status === "encoded" &&
+              "border border-blue-300 bg-blue-200 hover:bg-blue-500",
+            student.status === "not_printed" &&
               "border border-red-300 bg-red-200 hover:bg-red-500",
           )}
           onClick={() => {
+            const nextStatus = {
+              not_printed: "printed",
+              printed: "encoded",
+              encoded: "not_printed",
+            } as const;
             mutate({
               id: student.id,
-              printStatus: student.isPrinted!,
+              status: nextStatus[student.status],
             });
           }}
-        ></Button>
+        >
+          {student.status.replace("_", " ")}
+        </Button>
       </TableCell>
       <TableCell>
         <Button
@@ -164,7 +175,11 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               onClick={() =>
-                downloadStudentFile("picture", student.picture?.url, student.fullName)
+                downloadStudentFile(
+                  "picture",
+                  student.picture?.url,
+                  student.fullName,
+                )
               }
               disabled={student.picture === null}
             >
@@ -172,7 +187,11 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
-                downloadStudentFile("signature", student.signature?.url, student.fullName)
+                downloadStudentFile(
+                  "signature",
+                  student.signature?.url,
+                  student.fullName,
+                )
               }
               disabled={student.signature === null}
             >

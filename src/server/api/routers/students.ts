@@ -4,7 +4,12 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "~/server/api/trpc";
-import { pictures, signatures, students } from "~/server/db/schema";
+import {
+  pictures,
+  signatures,
+  students,
+  studentStatuses,
+} from "~/server/db/schema";
 import { publishStudentsChanged } from "~/server/realtime";
 import { utapi } from "~/server/uploadthing";
 import { eq } from "drizzle-orm";
@@ -20,12 +25,12 @@ export const studentRouter = createTRPCRouter({
         .where(eq(students.id, input.id));
       await publishStudentsChanged();
     }),
-  setIsPrinted: protectedProcedure
-    .input(z.object({ id: z.number(), printStatus: z.boolean() }))
+  setStatus: protectedProcedure
+    .input(z.object({ id: z.number(), status: z.enum(studentStatuses) }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db
         .update(students)
-        .set({ isPrinted: !input.printStatus })
+        .set({ status: input.status })
         .where(eq(students.id, input.id));
       await publishStudentsChanged();
     }),

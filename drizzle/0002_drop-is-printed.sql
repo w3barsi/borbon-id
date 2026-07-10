@@ -1,0 +1,1 @@
+ALTER TABLE `borbon-id_student` DROP COLUMN `is_printed`;

@@ -12,6 +12,8 @@ import { index, int, sqliteTableCreator, text } from "drizzle-orm/sqlite-core";
  */
 export const createTable = sqliteTableCreator((name) => `borbon-id_${name}`);
 
+export const studentStatuses = ["not_printed", "printed", "encoded"] as const;
+
 const timestamp = {
   createdAt: int("created_at", { mode: "timestamp" })
     .default(sql`(unixepoch())`)
@@ -32,7 +34,9 @@ export const students = createTable("student", {
   emergencyNumber: text("emergency_number"),
   emergencyAddress: text("emergency_address"),
 
-  isPrinted: int("is_printed", { mode: "boolean" }).default(false),
+  status: text("status", { enum: studentStatuses })
+    .default("not_printed")
+    .notNull(),
 
   createdById: text("created_by").notNull(),
   createdByName: text("created_by_name").notNull(),

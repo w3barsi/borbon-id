@@ -8,6 +8,20 @@
       "when": 1782892373548,
       "tag": "0000_rainy_archangel",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1783669511073,
+      "tag": "0001_add-student-status",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1783669526464,
+      "tag": "0002_drop-is-printed",
+      "breakpoints": true
     }
   ]
 }
