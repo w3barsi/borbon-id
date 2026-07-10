@@ -11,7 +11,6 @@ import {
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { Input } from "~/components/ui/input";
 import {
   Table,
   TableBody,
@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -45,6 +46,8 @@ import { toast } from "sonner";
 import EditStudentDialog from "./edit-dialog";
 import useViewPhotoDialogStore from "./view-photo-dialog-store";
 
+type StudentFilter = "all" | "incomplete" | "complete" | "printed";
+
 function getMissingFields(student: GetStudentsOutputType) {
   return [
     !student.fullName && "Full Name",
@@ -60,9 +63,16 @@ function getMissingFields(student: GetStudentsOutputType) {
 
 export default function DataTable() {
   const [data] = api.student.getStudents.useSuspenseQuery();
+  const [filter, setFilter] = useState<StudentFilter>("all");
   const [selectedStudent, setSelectedStudent] =
     useState<GetStudentsOutputType | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const filteredData = data.filter((student) => {
+    if (filter === "complete") return getMissingFields(student).length === 0;
+    if (filter === "incomplete") return getMissingFields(student).length > 0;
+    if (filter === "printed") return student.status === "printed";
+    return true;
+  });
 
   return (
     <div className="flex flex-col">
@@ -74,31 +84,63 @@ export default function DataTable() {
           setIsOpen={setIsEditDialogOpen}
         />
       )}
-      <TooltipProvider delayDuration={0}>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-10 text-center"></TableHead>
-              <TableHead className="w-full">Full Name</TableHead>
-              <TableHead className="min-w-32 text-center">Details</TableHead>
-              <TableHead className="min-w-60 text-center">Created on</TableHead>
-              <TableHead className="min-w-24 text-center">Status</TableHead>
-              <TableHead className="min-w-20 text-center">Picture</TableHead>
-              <TableHead className="min-w-20 text-center">Signature</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((student) => (
-              <StudentRow
-                key={student.id}
-                student={student}
-                setSelectedStudent={setSelectedStudent}
-                setIsEditDialogOpen={setIsEditDialogOpen}
-              />
-            ))}
-          </TableBody>
-        </Table>
-      </TooltipProvider>
+      <Tabs
+        value={filter}
+        onValueChange={(value) => setFilter(value as StudentFilter)}
+      >
+        <TabsList className="h-auto max-w-full justify-start overflow-x-auto">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="incomplete">Incomplete</TabsTrigger>
+          <TabsTrigger value="complete">Complete</TabsTrigger>
+          <TabsTrigger value="printed">Printed</TabsTrigger>
+        </TabsList>
+        <TabsContent value={filter}>
+          <TooltipProvider delayDuration={0}>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10 text-center"></TableHead>
+                  <TableHead className="w-full">Full Name</TableHead>
+                  <TableHead className="min-w-32 text-center">
+                    Details
+                  </TableHead>
+                  <TableHead className="min-w-60 text-center">
+                    Created on
+                  </TableHead>
+                  <TableHead className="min-w-24 text-center">Status</TableHead>
+                  <TableHead className="min-w-20 text-center">
+                    Picture
+                  </TableHead>
+                  <TableHead className="min-w-20 text-center">
+                    Signature
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredData.length > 0 ? (
+                  filteredData.map((student) => (
+                    <StudentRow
+                      key={student.id}
+                      student={student}
+                      setSelectedStudent={setSelectedStudent}
+                      setIsEditDialogOpen={setIsEditDialogOpen}
+                    />
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      No students match this filter.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TooltipProvider>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -230,7 +272,8 @@ function FileDropdown(props: {
   const file = props.file;
   const uploadedFile = file?.url ? { ...file, url: file.url } : null;
   const [isOpen, setIsOpen] = useState(false);
-  const uploadLabel = props.for === "picture" ? "Capture Picture" : "Capture Signature";
+  const uploadLabel =
+    props.for === "picture" ? "Capture Picture" : "Capture Signature";
   const uploadedAtLabel = uploadedFile?.createdAt
     ? `Uploaded: ${uploadedFile.createdAt.toLocaleString()}`
     : uploadedFile
@@ -267,14 +310,11 @@ function FileDropdown(props: {
       return result;
     });
 
-    toast.promise(
-      uploadPromise,
-      {
-        loading: `Uploading file for ${props.user.fullName ?? props.user.id}!`,
-        success: `Succesfully uploaded file for ${props.user.fullName ?? props.user.id}!`,
-        error: "Failed to upload file!",
-      },
-    );
+    toast.promise(uploadPromise, {
+      loading: `Uploading file for ${props.user.fullName ?? props.user.id}!`,
+      success: `Succesfully uploaded file for ${props.user.fullName ?? props.user.id}!`,
+      error: "Failed to upload file!",
+    });
   };
 
   return (
@@ -345,7 +385,8 @@ function FileDropdown(props: {
             Are you sure you want to delete photo?
           </AlertDialogHeader>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the photo.
+            This action cannot be undone. This will permanently delete the
+            photo.
           </AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
