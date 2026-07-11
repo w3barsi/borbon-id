@@ -16,6 +16,7 @@ import { saveAs } from "file-saver";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import EditStudentDialog from "../edit-dialog";
 import { NoteDialog } from "./note-dialog";
 
 function isPhotosComplete(student: GetStudentsOutputType) {
@@ -82,6 +83,7 @@ async function downloadStudentFile(
 
 export function StudentRow({ student }: { student: GetStudentsOutputType }) {
   const utils = api.useUtils();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
 
   const { mutate } = api.student.setStatus.useMutation({
@@ -111,6 +113,11 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
 
   return (
     <>
+      <EditStudentDialog
+        student={student}
+        isOpen={isEditDialogOpen}
+        setIsOpen={setIsEditDialogOpen}
+      />
       <NoteDialog
         student={student}
         open={isNoteDialogOpen}
@@ -183,6 +190,9 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+              Edit details
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
                 downloadStudentFile(
