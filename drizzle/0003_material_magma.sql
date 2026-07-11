@@ -1,0 +1,1 @@
+ALTER TABLE `borbon-id_student` ADD `admin_note` text;

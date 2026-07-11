@@ -34,6 +34,8 @@ export const students = createTable("student", {
   emergencyNumber: text("emergency_number"),
   emergencyAddress: text("emergency_address"),
 
+  adminNote: text("admin_note"),
+
   status: text("status", { enum: studentStatuses })
     .default("not_printed")
     .notNull(),

@@ -68,6 +68,11 @@ function matchesFilter(student: GetStudentsOutputType, filter: StudentFilter) {
   return true;
 }
 
+function hasAdminNote(note: string | null) {
+  const value = note?.trim();
+  return Boolean(value && value !== "admin_note");
+}
+
 export default function DataTable({ actions }: { actions: React.ReactNode }) {
   const [data] = api.student.getStudents.useSuspenseQuery();
   const [filter, setFilter] = useState<StudentFilter>("all");
@@ -105,6 +110,9 @@ export default function DataTable({ actions }: { actions: React.ReactNode }) {
               <TableRow>
                 <TableHead className="w-10 text-center"></TableHead>
                 <TableHead className="w-full">Full Name</TableHead>
+                <TableHead className="min-w-72">
+                  Notes from DARCYGRAPHiX
+                </TableHead>
                 <TableHead className="min-w-32 text-center">Details</TableHead>
                 <TableHead className="min-w-60 text-center">
                   Created on
@@ -134,7 +142,7 @@ export default function DataTable({ actions }: { actions: React.ReactNode }) {
               {!hasMatches && (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={8}
                     className="h-24 text-center text-muted-foreground"
                   >
                     No students match this filter.
@@ -199,6 +207,15 @@ const StudentRow = memo(function StudentRow(props: {
         >
           {student.fullName}
         </Button>
+      </TableCell>
+      <TableCell>
+        {hasAdminNote(student.adminNote) && (
+          <div className="max-w-md rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+            <p className="whitespace-pre-wrap break-words">
+              {student.adminNote}
+            </p>
+          </div>
+        )}
       </TableCell>
       <TableCell className="text-center">
         <span

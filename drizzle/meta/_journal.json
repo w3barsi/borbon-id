@@ -22,6 +22,13 @@
       "when": 1783669526464,
       "tag": "0002_drop-is-printed",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1783742382527,
+      "tag": "0003_material_magma",
+      "breakpoints": true
     }
   ]
 }

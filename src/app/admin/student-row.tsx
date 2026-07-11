@@ -13,7 +13,10 @@ import { cn } from "~/lib/utils";
 import type { GetStudentsOutputType } from "~/server/api/routers/students";
 import { api } from "~/trpc/react";
 import { saveAs } from "file-saver";
+import { useState } from "react";
 import { toast } from "sonner";
+
+import { NoteDialog } from "./note-dialog";
 
 function isPhotosComplete(student: GetStudentsOutputType) {
   return (
@@ -79,6 +82,7 @@ async function downloadStudentFile(
 
 export function StudentRow({ student }: { student: GetStudentsOutputType }) {
   const utils = api.useUtils();
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
 
   const { mutate } = api.student.setStatus.useMutation({
     onMutate: async ({ id, status }) => {
@@ -106,7 +110,13 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
   });
 
   return (
-    <TableRow key={student.id}>
+    <>
+      <NoteDialog
+        student={student}
+        open={isNoteDialogOpen}
+        onOpenChange={setIsNoteDialogOpen}
+      />
+      <TableRow key={student.id}>
       <TableCell>{student.lrn}</TableCell>
       <TableCell>{student.fullName}</TableCell>
       <TableCell>{student.grade}</TableCell>
@@ -204,9 +214,16 @@ export function StudentRow({ student }: { student: GetStudentsOutputType }) {
             >
               Copy
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsNoteDialogOpen(true)}>
+              {student.adminNote?.trim() &&
+              student.adminNote.trim() !== "admin_note"
+                ? "Edit note"
+                : "Add note"}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
-    </TableRow>
+      </TableRow>
+    </>
   );
 }

@@ -8,6 +8,7 @@
  */
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { initTRPC, TRPCError } from "@trpc/server";
+import { isAdmin } from "~/server/admin";
 import { db } from "~/server/db";
 import superjson from "superjson";
 import { ZodError } from "zod";
@@ -117,6 +118,13 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
       user: ctx.user,
     },
   });
+});
+export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!isAdmin(ctx.user)) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+
+  return next({ ctx });
 });
 export const authedProcedure = t.procedure.use(async ({ ctx, next }) => {
   if (!ctx.user) {

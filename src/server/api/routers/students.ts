@@ -1,5 +1,6 @@
 import { type inferRouterOutputs } from "@trpc/server";
 import {
+  adminProcedure,
   authedProcedure,
   createTRPCRouter,
   protectedProcedure,
@@ -16,7 +17,7 @@ import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 export const studentRouter = createTRPCRouter({
-  archive: protectedProcedure
+  archive: adminProcedure
     .input(z.object({ id: z.number(), archive: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db
@@ -25,7 +26,7 @@ export const studentRouter = createTRPCRouter({
         .where(eq(students.id, input.id));
       await publishStudentsChanged();
     }),
-  setStatus: protectedProcedure
+  setStatus: adminProcedure
     .input(z.object({ id: z.number(), status: z.enum(studentStatuses) }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db
@@ -34,7 +35,7 @@ export const studentRouter = createTRPCRouter({
         .where(eq(students.id, input.id));
       await publishStudentsChanged();
     }),
-  setStatuses: protectedProcedure
+  setStatuses: adminProcedure
     .input(
       z.object({
         ids: z.array(z.number()).min(1),
@@ -46,6 +47,21 @@ export const studentRouter = createTRPCRouter({
         .update(students)
         .set({ status: input.status })
         .where(inArray(students.id, input.ids));
+      await publishStudentsChanged();
+    }),
+  setAdminNote: adminProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        note: z.string().max(2000),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const note = input.note.trim();
+      await ctx.db
+        .update(students)
+        .set({ adminNote: note || null })
+        .where(eq(students.id, input.id));
       await publishStudentsChanged();
     }),
   getStudents: protectedProcedure.query(async ({ ctx }) => {
