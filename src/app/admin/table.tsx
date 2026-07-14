@@ -66,6 +66,10 @@ export default function DataTable() {
       student.signature,
   ).length;
 
+  const encodedStudentCount = filteredStudents.filter(
+    (student) => student.status === "encoded" && !student.isArchived,
+  ).length;
+
   const studentsWithCompletePhotosCount = filteredStudents.filter(
     (student) => student.picture && student.signature,
   ).length;
@@ -111,6 +115,14 @@ export default function DataTable() {
           </div>
           <div className="flex items-center gap-2">
             <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge className="cursor-default bg-blue-400 text-black hover:bg-blue-500">
+                    {encodedStudentCount}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>Students that have been encoded</TooltipContent>
+              </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Badge className="cursor-default bg-green-400 text-black hover:bg-green-500">
