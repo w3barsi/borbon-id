@@ -31,7 +31,9 @@ function getBaseStudents(
   students: GetStudentsOutputType[],
   filter: FilterType,
 ) {
-  return filter === "new" ? students.filter((s) => !s.isArchived) : students;
+  if (filter === "new") return students.filter((s) => !s.isArchived);
+  if (filter === "archived") return students.filter((s) => s.isArchived);
+  return students;
 }
 
 function formatStudentRow(student: GetStudentsOutputType, compactLrn: boolean) {
@@ -124,7 +126,10 @@ export function ActionsDropdown({
   );
   const readyToPrintStudents = baseStudents.filter(
     (s) =>
-      s.status === "not_printed" && s.picture !== null && s.signature !== null,
+      s.status === "not_printed" &&
+      Boolean(s.lrn?.trim()) &&
+      s.picture !== null &&
+      s.signature !== null,
   );
   const completeStudents = baseStudents.filter(
     (s) =>
@@ -226,6 +231,10 @@ export function ActionsDropdown({
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
                 <DropdownMenuGroup>
+                  <DropdownMenuLabel className="w-64 whitespace-normal text-xs font-normal leading-snug text-muted-foreground">
+                    Every student in the current table view.
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleCopyAllData}>
                     Copy data
                   </DropdownMenuItem>
@@ -260,6 +269,10 @@ export function ActionsDropdown({
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
                 <DropdownMenuGroup>
+                  <DropdownMenuLabel className="w-64 whitespace-normal text-xs font-normal leading-snug text-muted-foreground">
+                    Students in the current view with Not Printed status.
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleCopyAllNotPrintedData}>
                     Copy data
                   </DropdownMenuItem>
@@ -294,6 +307,10 @@ export function ActionsDropdown({
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
                 <DropdownMenuGroup>
+                  <DropdownMenuLabel className="w-64 whitespace-normal text-xs font-normal leading-snug text-muted-foreground">
+                    Not Printed students with an LRN, picture, and signature.
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleCopyReadyToPrintData}>
                     Copy data
                   </DropdownMenuItem>
@@ -328,6 +345,11 @@ export function ActionsDropdown({
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
                 <DropdownMenuGroup>
+                  <DropdownMenuLabel className="w-64 whitespace-normal text-xs font-normal leading-snug text-muted-foreground">
+                    Students with all required details, a picture, and a
+                    signature.
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
                   <DropdownMenuLabel>Copy</DropdownMenuLabel>
                   <DropdownMenuItem
                     disabled={completeNotPrintedStudents.length === 0}
