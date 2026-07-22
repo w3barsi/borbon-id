@@ -149,6 +149,11 @@ export function ActionsDropdown({
   const completeEncodedStudents = completeStudents.filter(
     (student) => student.status === "encoded",
   );
+  const baseStudentIds = baseStudents.map((student) => student.id);
+  const notPrintedStudentIds = notPrintedStudents.map((student) => student.id);
+  const readyToPrintStudentIds = readyToPrintStudents.map(
+    (student) => student.id,
+  );
   const completeStudentIds = completeStudents.map((student) => student.id);
   const encodedStudentIds = baseStudents
     .filter((student) => student.status === "encoded")
@@ -235,21 +240,31 @@ export function ActionsDropdown({
                     Every student in the current table view.
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleCopyAllData}>
+                  <DropdownMenuLabel>Copy</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    disabled={baseStudents.length === 0}
+                    onClick={handleCopyAllData}
+                  >
                     Copy data
                   </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Downloads</DropdownMenuLabel>
                   <DropdownMenuItem
+                    disabled={baseStudents.length === 0}
                     onClick={() =>
                       toast.promise(handleDownloadPhotos, {
                         loading: "Preparing to download photos...",
                         success: "Successfully downloaded photos!",
-                        error: "Failed to download signatures",
+                        error: "Failed to download photos",
                       })
                     }
                   >
                     Download Pictures
                   </DropdownMenuItem>
                   <DropdownMenuItem
+                    disabled={baseStudents.length === 0}
                     onClick={() =>
                       toast.promise(handleDownloadSignatures, {
                         loading: "Preparing to download signatures...",
@@ -259,6 +274,43 @@ export function ActionsDropdown({
                     }
                   >
                     Download Signatures
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Mark as</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    disabled={
+                      baseStudentIds.length === 0 || isSettingBulkStatus
+                    }
+                    onClick={() =>
+                      setBulkStatus({
+                        ids: baseStudentIds,
+                        status: "not_printed",
+                      })
+                    }
+                  >
+                    Not Printed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={
+                      baseStudentIds.length === 0 || isSettingBulkStatus
+                    }
+                    onClick={() =>
+                      setBulkStatus({ ids: baseStudentIds, status: "printed" })
+                    }
+                  >
+                    Printed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={
+                      baseStudentIds.length === 0 || isSettingBulkStatus
+                    }
+                    onClick={() =>
+                      setBulkStatus({ ids: baseStudentIds, status: "encoded" })
+                    }
+                  >
+                    Encoded
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuSubContent>
@@ -273,21 +325,31 @@ export function ActionsDropdown({
                     Students in the current view with Not Printed status.
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleCopyAllNotPrintedData}>
+                  <DropdownMenuLabel>Copy</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    disabled={notPrintedStudents.length === 0}
+                    onClick={handleCopyAllNotPrintedData}
+                  >
                     Copy data
                   </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Downloads</DropdownMenuLabel>
                   <DropdownMenuItem
+                    disabled={notPrintedStudents.length === 0}
                     onClick={() =>
                       toast.promise(handleDownloadNotPrintedPhotos, {
                         loading: "Preparing to download photos...",
                         success: "Successfully downloaded photos!",
-                        error: "Failed to download signatures",
+                        error: "Failed to download photos",
                       })
                     }
                   >
                     Download Pictures
                   </DropdownMenuItem>
                   <DropdownMenuItem
+                    disabled={notPrintedStudents.length === 0}
                     onClick={() =>
                       toast.promise(handleDownloadNotPrintedSignatures, {
                         loading: "Preparing to download signatures...",
@@ -297,6 +359,49 @@ export function ActionsDropdown({
                     }
                   >
                     Download Signatures
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Mark as</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    disabled={
+                      notPrintedStudentIds.length === 0 || isSettingBulkStatus
+                    }
+                    onClick={() =>
+                      setBulkStatus({
+                        ids: notPrintedStudentIds,
+                        status: "not_printed",
+                      })
+                    }
+                  >
+                    Not Printed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={
+                      notPrintedStudentIds.length === 0 || isSettingBulkStatus
+                    }
+                    onClick={() =>
+                      setBulkStatus({
+                        ids: notPrintedStudentIds,
+                        status: "printed",
+                      })
+                    }
+                  >
+                    Printed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={
+                      notPrintedStudentIds.length === 0 || isSettingBulkStatus
+                    }
+                    onClick={() =>
+                      setBulkStatus({
+                        ids: notPrintedStudentIds,
+                        status: "encoded",
+                      })
+                    }
+                  >
+                    Encoded
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuSubContent>
@@ -311,21 +416,31 @@ export function ActionsDropdown({
                     Not Printed students with an LRN, picture, and signature.
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleCopyReadyToPrintData}>
+                  <DropdownMenuLabel>Copy</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    disabled={readyToPrintStudents.length === 0}
+                    onClick={handleCopyReadyToPrintData}
+                  >
                     Copy data
                   </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Downloads</DropdownMenuLabel>
                   <DropdownMenuItem
+                    disabled={readyToPrintStudents.length === 0}
                     onClick={() =>
                       toast.promise(handleDownloadReadyToPrintPhotos, {
                         loading: "Preparing to download photos...",
                         success: "Successfully downloaded photos!",
-                        error: "Failed to download signatures",
+                        error: "Failed to download photos",
                       })
                     }
                   >
                     Download Pictures
                   </DropdownMenuItem>
                   <DropdownMenuItem
+                    disabled={readyToPrintStudents.length === 0}
                     onClick={() =>
                       toast.promise(handleDownloadReadyToPrintSignatures, {
                         loading: "Preparing to download signatures...",
@@ -335,6 +450,49 @@ export function ActionsDropdown({
                     }
                   >
                     Download Signatures
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Mark as</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    disabled={
+                      readyToPrintStudentIds.length === 0 || isSettingBulkStatus
+                    }
+                    onClick={() =>
+                      setBulkStatus({
+                        ids: readyToPrintStudentIds,
+                        status: "not_printed",
+                      })
+                    }
+                  >
+                    Not Printed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={
+                      readyToPrintStudentIds.length === 0 || isSettingBulkStatus
+                    }
+                    onClick={() =>
+                      setBulkStatus({
+                        ids: readyToPrintStudentIds,
+                        status: "printed",
+                      })
+                    }
+                  >
+                    Printed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={
+                      readyToPrintStudentIds.length === 0 || isSettingBulkStatus
+                    }
+                    onClick={() =>
+                      setBulkStatus({
+                        ids: readyToPrintStudentIds,
+                        status: "encoded",
+                      })
+                    }
+                  >
+                    Encoded
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuSubContent>

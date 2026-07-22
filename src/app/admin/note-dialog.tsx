@@ -57,6 +57,12 @@ export function NoteDialog({
         <textarea
           value={note}
           onChange={(event) => setNote(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.ctrlKey && event.key === "Enter") {
+              event.preventDefault();
+              if (!isPending) save(note);
+            }
+          }}
           maxLength={2000}
           rows={7}
           placeholder="Enter a note for this student..."
@@ -77,11 +83,7 @@ export function NoteDialog({
           >
             Clear note
           </Button>
-          <Button
-            type="button"
-            disabled={isPending}
-            onClick={() => save(note)}
-          >
+          <Button type="button" disabled={isPending} onClick={() => save(note)}>
             {isPending ? "Saving..." : "Save note"}
           </Button>
         </DialogFooter>
