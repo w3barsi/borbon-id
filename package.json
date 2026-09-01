@@ -84,5 +84,11 @@
   "ct3aMetadata": {
     "initVersion": "7.37.0"
   },
+  "intent": {
+    "skills": [
+      "@tanstack/*",
+      "@trpc/*"
+    ]
+  },
   "packageManager": "pnpm@9.10.0"
 }

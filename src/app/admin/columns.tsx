@@ -50,13 +50,22 @@ export const studentColumns = columnHelper.columns([
       />
     ),
     enableHiding: false,
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
+    cell: ({ row }) => {
+      const toggleSelected = row.getToggleSelectedHandler();
+
+      return (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onClick={(event) =>
+            toggleSelected({
+              target: { checked: !row.getIsSelected() },
+              shiftKey: event.shiftKey,
+            })
+          }
+          aria-label="Select row"
+        />
+      );
+    },
   }),
   columnHelper.accessor("lrn", {
     header: "LRN",
