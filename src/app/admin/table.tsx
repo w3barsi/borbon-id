@@ -39,7 +39,7 @@ import type { GetStudentsOutputType } from "~/server/api/routers/students";
 import { api } from "~/trpc/react";
 import { useMemo, useState } from "react";
 
-import { ActionsDropdown } from "./actions-dropdown";
+import { BulkControls } from "./bulk-controls";
 import { studentColumns } from "./columns";
 import {
   studentTableFeatures,
@@ -122,6 +122,48 @@ export default function DataTable() {
     onRowSelectionChange: setRowSelection,
   });
 
+  // The table's filtered row model applies the archive tab and search filters,
+  // so the visible rows are exactly the selection-preset scope.
+  const visibleStudents = table.getRowModel().rows.map((row) => row.original);
+
+  // Drop selected IDs that no longer exist so realtime updates or deletions
+  // cannot leave a stale selection behind. React Query's structural sharing
+  // keeps the data reference stable when nothing changed, so this only runs
+  // when the student list actually differs.
+  const [prevStudents, setPrevStudents] = useState(students);
+  if (students !== prevStudents) {
+    setPrevStudents(students);
+    setRowSelection((prev) => {
+      const aliveIds = new Set(students.map((student) => String(student.id)));
+      const next: RowSelectionState = {};
+      let dropped = false;
+      for (const id of Object.keys(prev)) {
+        if (aliveIds.has(id)) next[id] = true;
+        else dropped = true;
+      }
+      return dropped ? next : prev;
+    });
+  }
+
+  const selectedStudents = students.filter(
+    (student) => rowSelection[String(student.id)] === true,
+  );
+
+  const handleSelectPreset = (presetStudents: GetStudentsOutputType[]) => {
+    setRowSelection(
+      Object.fromEntries(
+        presetStudents.map((student) => [String(student.id), true]),
+      ),
+    );
+  };
+
+  const handleClearSelection = () => setRowSelection({});
+
+  const handleTabChange = (nextFilter: FilterType) => {
+    setRowSelection({});
+    setFilter(nextFilter);
+  };
+
   // Counters describe the selected archive tab: they come from the faceted row
   // model, which applies every filter except the search, so they are unaffected
   // by search, sorting, and row selection.
@@ -161,7 +203,7 @@ export default function DataTable() {
             className="flex gap-2 rounded-lg bg-neutral-200/50 p-1"
           >
             <Button
-              onClick={() => setFilter("new")}
+              onClick={() => handleTabChange("new")}
               className={cn(
                 filter === "new"
                   ? "bg-black text-white hover:bg-black/90"
@@ -171,7 +213,7 @@ export default function DataTable() {
               New Students
             </Button>
             <Button
-              onClick={() => setFilter("all")}
+              onClick={() => handleTabChange("all")}
               className={cn(
                 filter === "all"
                   ? "bg-black text-white hover:bg-black/90"
@@ -181,7 +223,7 @@ export default function DataTable() {
               All Students
             </Button>
             <Button
-              onClick={() => setFilter("archived")}
+              onClick={() => handleTabChange("archived")}
               className={cn(
                 filter === "archived"
                   ? "bg-black text-white hover:bg-black/90"
@@ -191,12 +233,12 @@ export default function DataTable() {
               Archive
             </Button>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Input
               placeholder="Search by name..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              className="w-40 lg:w-56"
+              className="w-full sm:w-40 lg:w-56"
             />
             <StudentViewOptions table={table} />
             <TooltipProvider delayDuration={0}>
@@ -229,7 +271,12 @@ export default function DataTable() {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <ActionsDropdown students={students} filter={filter} />
+            <BulkControls
+              visibleStudents={visibleStudents}
+              selectedStudents={selectedStudents}
+              onSelectPreset={handleSelectPreset}
+              onClearSelection={handleClearSelection}
+            />
           </div>
         </div>
       </Container>

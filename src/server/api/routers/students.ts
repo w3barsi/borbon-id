@@ -49,6 +49,15 @@ export const studentRouter = createTRPCRouter({
         .where(inArray(students.id, input.ids));
       await publishStudentsChanged();
     }),
+  archiveStudents: adminProcedure
+    .input(z.object({ ids: z.array(z.number()).min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(students)
+        .set({ isArchived: true })
+        .where(inArray(students.id, input.ids));
+      await publishStudentsChanged();
+    }),
   setAdminNote: adminProcedure
     .input(
       z.object({
