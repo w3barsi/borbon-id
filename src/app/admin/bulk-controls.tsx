@@ -169,26 +169,72 @@ export function BulkControls({
 
   const { mutate: setStatuses, isPending: isSettingStatuses } =
     api.student.setStatuses.useMutation({
-      onSuccess: async (_data, { ids, status }) => {
+      onMutate: async ({ ids, status }) => {
+        await utils.student.getStudents.cancel();
+        const previousStudents = utils.student.getStudents.getData();
+        utils.student.getStudents.setData(
+          undefined,
+          (old) =>
+            old?.map((student) =>
+              ids.includes(student.id) ? { ...student, status } : student,
+            ) ?? [],
+        );
+        return { previousStudents };
+      },
+      onError: (_error, _variables, context) => {
+        if (context?.previousStudents) {
+          utils.student.getStudents.setData(
+            undefined,
+            context.previousStudents,
+          );
+        }
+        toast.error("Failed to update student statuses.");
+      },
+      onSuccess: (_data, { ids, status }) => {
         toast.success(
           `Marked ${ids.length} ${ids.length === 1 ? "student" : "students"} as ${status.replace("_", " ")}.`,
         );
-        await utils.student.getStudents.invalidate();
         onClearSelection();
       },
-      onError: () => toast.error("Failed to update student statuses."),
+      onSettled: async () => {
+        await utils.student.getStudents.invalidate();
+      },
     });
 
   const { mutate: archiveStudents, isPending: isArchivingStudents } =
     api.student.archiveStudents.useMutation({
-      onSuccess: async (_data, { ids }) => {
+      onMutate: async ({ ids }) => {
+        await utils.student.getStudents.cancel();
+        const previousStudents = utils.student.getStudents.getData();
+        utils.student.getStudents.setData(
+          undefined,
+          (old) =>
+            old?.map((student) =>
+              ids.includes(student.id)
+                ? { ...student, isArchived: true }
+                : student,
+            ) ?? [],
+        );
+        return { previousStudents };
+      },
+      onError: (_error, _variables, context) => {
+        if (context?.previousStudents) {
+          utils.student.getStudents.setData(
+            undefined,
+            context.previousStudents,
+          );
+        }
+        toast.error("Failed to archive students.");
+      },
+      onSuccess: (_data, { ids }) => {
         toast.success(
           `Archived ${ids.length} ${ids.length === 1 ? "student" : "students"}.`,
         );
-        await utils.student.getStudents.invalidate();
         onClearSelection();
       },
-      onError: () => toast.error("Failed to archive students."),
+      onSettled: async () => {
+        await utils.student.getStudents.invalidate();
+      },
     });
 
   const selectedIds = selectedStudents.map((student) => student.id);
