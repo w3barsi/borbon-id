@@ -42,13 +42,16 @@ function isEncoded(student: GetStudentsOutputType) {
   return student.status === "encoded";
 }
 
+function hasPrintableLrnAndPhoto(student: GetStudentsOutputType) {
+  return Boolean(student.lrn?.trim()) && student.picture !== null;
+}
+
+function isReadyToPrintCandidate(student: GetStudentsOutputType) {
+  return isNotPrinted(student) && hasPrintableLrnAndPhoto(student);
+}
+
 function isReadyToPrint(student: GetStudentsOutputType) {
-  return (
-    isNotPrinted(student) &&
-    Boolean(student.lrn?.trim()) &&
-    student.picture !== null &&
-    student.signature !== null
-  );
+  return isReadyToPrintCandidate(student) && student.signature !== null;
 }
 
 function isComplete(student: GetStudentsOutputType) {
@@ -61,10 +64,6 @@ function isComplete(student: GetStudentsOutputType) {
 
 function isMissingSignature(student: GetStudentsOutputType) {
   return hasCompleteInfo(student) && student.signature === null;
-}
-
-function hasPhotoButNoSignature(student: GetStudentsOutputType) {
-  return isMissingSignature(student) && student.picture !== null;
 }
 
 function formatStudentRow(student: GetStudentsOutputType, compactLrn: boolean) {
@@ -169,8 +168,8 @@ export function BulkControls({
   const readyToPrintStudents = visibleStudents.filter(isReadyToPrint);
   const completeStudents = visibleStudents.filter(isComplete);
   const missingSignatureStudents = visibleStudents.filter(isMissingSignature);
-  const photoButNoSignatureStudents = visibleStudents.filter(
-    hasPhotoButNoSignature,
+  const readyToPrintCandidateStudents = visibleStudents.filter(
+    isReadyToPrintCandidate,
   );
   const encodedStudents = visibleStudents.filter(isEncoded);
 
@@ -264,7 +263,7 @@ export function BulkControls({
         <DropdownMenuTrigger asChild>
           <Button variant="outline">Select</Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-52" align="end">
+        <DropdownMenuContent className="w-64" align="end">
           <DropdownMenuLabel>Selection presets</DropdownMenuLabel>
           <DropdownMenuGroup>
             <DropdownMenuItem
@@ -286,6 +285,12 @@ export function BulkControls({
               Ready to Print ({readyToPrintStudents.length})
             </DropdownMenuItem>
             <DropdownMenuItem
+              disabled={readyToPrintCandidateStudents.length === 0}
+              onClick={() => onSelectPreset(readyToPrintCandidateStudents)}
+            >
+              {`Ready but Missing Signature (${readyToPrintCandidateStudents.length})`}
+            </DropdownMenuItem>
+            <DropdownMenuItem
               disabled={completeStudents.length === 0}
               onClick={() => onSelectPreset(completeStudents)}
             >
@@ -296,12 +301,6 @@ export function BulkControls({
               onClick={() => onSelectPreset(missingSignatureStudents)}
             >
               Missing Signature ({missingSignatureStudents.length})
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={photoButNoSignatureStudents.length === 0}
-              onClick={() => onSelectPreset(photoButNoSignatureStudents)}
-            >
-              Photo, No Signature ({photoButNoSignatureStudents.length})
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={encodedStudents.length === 0}
