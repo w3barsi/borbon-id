@@ -63,6 +63,10 @@ function isMissingSignature(student: GetStudentsOutputType) {
   return hasCompleteInfo(student) && student.signature === null;
 }
 
+function hasPhotoButNoSignature(student: GetStudentsOutputType) {
+  return isMissingSignature(student) && student.picture !== null;
+}
+
 function formatStudentRow(student: GetStudentsOutputType, compactLrn: boolean) {
   const grade = (student.grade ?? "").toString().trim();
   const lrn = (student.lrn ?? "").trim();
@@ -165,6 +169,9 @@ export function BulkControls({
   const readyToPrintStudents = visibleStudents.filter(isReadyToPrint);
   const completeStudents = visibleStudents.filter(isComplete);
   const missingSignatureStudents = visibleStudents.filter(isMissingSignature);
+  const photoButNoSignatureStudents = visibleStudents.filter(
+    hasPhotoButNoSignature,
+  );
   const encodedStudents = visibleStudents.filter(isEncoded);
 
   const { mutate: setStatuses, isPending: isSettingStatuses } =
@@ -289,6 +296,12 @@ export function BulkControls({
               onClick={() => onSelectPreset(missingSignatureStudents)}
             >
               Missing Signature ({missingSignatureStudents.length})
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={photoButNoSignatureStudents.length === 0}
+              onClick={() => onSelectPreset(photoButNoSignatureStudents)}
+            >
+              Photo, No Signature ({photoButNoSignatureStudents.length})
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={encodedStudents.length === 0}
